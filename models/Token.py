@@ -8,4 +8,4 @@ class Token(Base):
     __tablename__ = "tokens"
     token = Column(String(255),primary_key = True)
     user_id = Column(Integer, ForeignKey("users.id"))
-    user = relationship("User", back_populates="token")
+    user = relationship("User", back_populates="tokens")
