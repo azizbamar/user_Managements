@@ -1,7 +1,8 @@
 import bcrypt
 import jwt
 import time
-from fastapi import FastAPI,Depends,HTTPException,APIRouter
+from fastapi import FastAPI,Depends,HTTPException,APIRouter,Header
+
 from Controllers import UserController
 from sqlalchemy.orm import Session
 from Schemas.Authentification import Authentification
@@ -24,3 +25,7 @@ async def signUp(request : Registration, db : Session = Depends(get_db)):
 @userRooter.post('/user_sign_in')
 async def signUp(request : Authentification, db : Session = Depends(get_db)):
    return  UserController.signIn(request,db)
+
+@userRooter.post('/user_sign_out')
+async def signUp(db : Session = Depends(get_db),token : str = Header(...)):
+   return  UserController.signOut(db,token)

@@ -1,4 +1,4 @@
-from Controllers.TokenController import createAccessToken
+from Controllers.TokenController import createAccessToken, invalidateToken
 from Schemas.Authentification import Authentification
 from Schemas.Hasher import hash_password
 from Schemas.Registration import Registration
@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from database.database import SessionLocal
 from models.User import User
 from sqlalchemy import exc
-from fastapi import FastAPI,Depends,HTTPException
+from fastapi import FastAPI,Depends,HTTPException,Header
 
 
 def signUp(request : Registration ,db):
@@ -24,9 +24,13 @@ def signUp(request : Registration ,db):
 def signIn(request : Authentification , db):
     user = db.query(User).filter(User.email == request.email).first()
     if (user):
-        return createAccessToken(user,request.password,db)
+        return createAccessToken(user,request.password,request.clientType,request.phoneId,db)
     else:
         raise HTTPException(status_code=400,detail="wrong email or password")
+
+
+def signOut(db,token):
+    return invalidateToken(db,token)
 
 
  
