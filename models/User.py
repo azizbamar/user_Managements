@@ -11,5 +11,5 @@ class User(Base):
     password = Column(String(255))
     username = Column(String(255))
     telephoneNumber = Column(String(255))
-    phone = relationship("Phone", uselist=False, back_populates="user")
-    tokens = relationship("Token", back_populates="user")
+    phone = relationship("Phone", uselist=False, back_populates="user",passive_deletes=True)
+    tokens = relationship("Token", back_populates="user",passive_deletes=True)

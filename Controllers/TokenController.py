@@ -33,10 +33,17 @@ def createAccessToken(user,password,clientType,phoneId,db):
         raise HTTPException(status_code=400, detail="wrong email or password")
 
 
-async def checkAccessToken(token : str = Header(...)):
+async def checkAccessToken(db,token : str = Header(...)):
+    tokenExist = db.query(Token).filter(Token.token == token).first()
+
     try:
         decoded_token = jwt.decode(token, "secret",algorithms=['HS256'])
-        return decoded_token
+        tokenExist = db.query(Token).filter(Token.token == token).first()
+        if (tokenExist):
+            return decoded_token
+        else:
+            raise HTTPException(status_code=400,detail="unauthorized")
+
     except jwt.DecodeError:
         raise HTTPException(status_code=400,detail="invalid token")
 
