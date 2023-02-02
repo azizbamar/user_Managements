@@ -1,13 +1,26 @@
 from Schemas import Hasher
 import bcrypt,time
-from fastapi import FastAPI, HTTPException, Depends,Header
+from fastapi import FastAPI, HTTPException, Depends,Header,status
 from fastapi.requests import Request
 from fastapi.responses import JSONResponse
 # import jwt
+import asyncio
 from jose import JWTError,jwt
 from sqlalchemy import exc
 from models.Phone import Phone
 from models.Token import Token
+from models.User import User,user_roles
+from models.Role import Role
+
+
+def get_user(email: str,db ):
+   
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    print('get user function')
+    return user
+
 
 def createAccessToken(user,password,clientType,phoneId,db):
     
@@ -26,6 +39,7 @@ def createAccessToken(user,password,clientType,phoneId,db):
             print(user.id)
             tokenExist = db.query(Token).filter(Token.phoneId != phoneId and Token.user_id==user.id).first()
             if not (tokenExist):
+            
                 
                 addToken(token,db)
                 print(token)
@@ -34,9 +48,17 @@ def createAccessToken(user,password,clientType,phoneId,db):
 
         
 
-        return {"access_token": access_token, "token_type": "Bearer"}
+        return {"user":checkAccessToken(db,access_token),"access_token": access_token, "token_type": "Bearer"}
     else:
         raise HTTPException(status_code=400, detail="wrong email or password")
+
+# def getUserRoles(token,db):
+#     user=checkAccessToken(db,token)
+#     userId=user.id
+#     userRoles=db.query(user_roles).filter(user_roles.user_id== userId).all()
+#     print(userRoles)
+#     return (userRoles)
+
 
 
 def addToken(token,db):
@@ -48,24 +70,24 @@ def addToken(token,db):
             raise HTTPException(status_code=400,detail="error has been occured")
 
 
-async def checkAccessToken(db,token : str = Header(...)):
-    tokenExist = db.query(Token).filter(Token.token == token).first()
+def checkAccessToken(db,token : str = Header(...)):
+    
 
     try:
         decoded_token = jwt.decode(token, "secret",algorithms=['HS256'])
+        print(decoded_token)
         tokenExist = db.query(Token).filter(Token.token == token).first()
+        print(tokenExist)
         if (tokenExist):
-            return decoded_token
+            email=decoded_token["email"]
+            return get_user(email,db)
         else:
             raise HTTPException(status_code=400,detail="unauthorized")
 
     except JWTError:
         raise HTTPException(status_code=400,detail="invalid token")
 
-async def checkTokenExist(userid,db):
-    verif = db.query(Token).filter(Token.phoneId == userid).first()
-    if verif:return True
-    return False
+
 
 
 
