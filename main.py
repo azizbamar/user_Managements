@@ -4,7 +4,10 @@ from models.User import User
 from models.Token import Token
 from models.Phone import Phone
 from models.Role import Role
+from models.Claim import Claim
+from models.RoleClaim import RoleClaim
 from fastapi.middleware.cors import CORSMiddleware
+
 
 
 

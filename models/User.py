@@ -18,5 +18,6 @@ class User(Base):
     phone = relationship("Phone", uselist=False, back_populates="user",passive_deletes=True)
     tokens = relationship("Token", back_populates="user",passive_deletes=True)
     roles = relationship("Role", secondary=user_roles, backref="users")
+    
 
 

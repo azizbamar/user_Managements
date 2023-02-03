@@ -7,10 +7,10 @@ from sqlalchemy.orm import relationship
 class Token(Base):
     __tablename__ = "tokens"
     token = Column(String(255),primary_key = True)
-    clientType = Column(String(255))
-    phoneId = Column(String(255),unique=True, nullable=True)
     user_id = Column(Integer, ForeignKey("users.id",ondelete = 'CASCADE'))
     user = relationship("User", back_populates="tokens")
+
+
 
 
 

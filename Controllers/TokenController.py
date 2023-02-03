@@ -22,32 +22,28 @@ def get_user(email: str,db ):
     return user
 
 
-def createAccessToken(user,password,clientType,phoneId,db):
+def createAccessToken(user,password,db):
     
     payload =createPayload(user)
     if Hasher.verify_password(password, user.password):
-        print(clientType)
+       
         access_token = jwt.encode(payload, "secret", algorithm="HS256")
-        if (clientType=="web"):
-            print(clientType)
-            token = Token(token = access_token ,clientType = clientType,user = user)
-            addToken(token,db)
-            print(clientType)
-        else:
-            createPhoneIfNotExist(phoneId,user,db)
-            token = Token(token = access_token ,clientType = clientType, phoneId =phoneId,user = user)
-            print(user.id)
-            tokenExist = db.query(Token).filter(Token.phoneId != phoneId and Token.user_id==user.id).first()
-            if not (tokenExist):
-            
-                
-                addToken(token,db)
-                print(token)
-            else:
-              raise HTTPException(status_code=400,detail="already connected")
-
         
+        token = Token(token = access_token ,user = user)
+        addToken(token,db)
 
+        return {"user":checkAccessToken(db,access_token),"access_token": access_token, "token_type": "Bearer"}
+    else:
+        raise HTTPException(status_code=400, detail="wrong email or password")
+
+def createAccessTokenPhone(user,password,phone,db):
+    
+    payload =createPayload(user)
+    if Hasher.verify_password(password, user.password):
+        access_token = jwt.encode(payload, "secret", algorithm="HS256")
+        token = Token(token = access_token ,user = user)
+        addToken(token,db)
+        createPhoneIfNotExist(phone=phone,user=user,db=db)
         return {"user":checkAccessToken(db,access_token),"access_token": access_token, "token_type": "Bearer"}
     else:
         raise HTTPException(status_code=400, detail="wrong email or password")
@@ -102,12 +98,14 @@ def invalidateToken(db,token):
         raise HTTPException(status_code=400,detail="invalid token")
 
 
-def createPhoneIfNotExist(phoneId,user,db):
-    phoneExist = db.query(Phone).filter(Phone.uid == phoneId).first()
-    if not (phoneExist):
-        phone = Phone(uid = phoneId,user = user)
+def createPhoneIfNotExist(phone,user,db):
+    UserPhoneExist = db.query(Phone).filter(Phone.user_id == user.id).first()
+    if not (UserPhoneExist):
+        phone = Phone(uid = phone.uid,user = user,modele=phone.modele,androidVersion=phone.androidVersion)
         db.add(phone)
         db.commit()
+    else:
+        raise HTTPException(status_code=400,detail="User already connected By Other Phone")
 
 def createPayload(user):
     return {
