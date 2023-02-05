@@ -10,7 +10,10 @@ class Token(Base):
     user_id = Column(Integer, ForeignKey("users.id",ondelete = 'CASCADE'))
     user = relationship("User", back_populates="tokens")
 
-
+class PhoneToken(Token):
+    __tablename__ = "phonetokens"
+    token = Column(String(255),ForeignKey("tokens.token"),primary_key = True)
+    phone_id = Column(String(255),unique=True)
 
 
 

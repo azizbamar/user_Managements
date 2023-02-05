@@ -5,7 +5,7 @@ from models.Token import Token
 from models.Phone import Phone
 from models.Role import Role
 from models.Claim import Claim
-from models.RoleClaim import RoleClaim
+from models.RoleClaim import role_claim
 from fastapi.middleware.cors import CORSMiddleware
 
 
@@ -13,6 +13,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from sqlalchemy.orm import Session
 from Roots.UserRoot import userRooter
+from Roots.RoleRoute import roleRouter
+from Roots.ClaimRouter import claimRouter
+
 
 app = FastAPI()
 app.add_middleware(
@@ -23,7 +26,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 Base.metadata.create_all(bind=engine)
 
 app.include_router(userRooter)
+app.include_router(roleRouter)
+app.include_router(claimRouter)
 

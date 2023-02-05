@@ -1,12 +1,12 @@
 from pydantic import BaseModel
-from sqlalchemy import Column,Integer,String,ForeignKey,PrimaryKeyConstraint
+from sqlalchemy import Column,Integer,String,ForeignKey,PrimaryKeyConstraint,Table
 from sqlalchemy.orm import relationship
 
 from database.database import Base
 
 
-class RoleClaim(Base):
-    __tablename__ ="role_claim"
-    role_id = Column(Integer, ForeignKey('roles.id'))
-    claim_id = Column(Integer, ForeignKey('claims.id'))
-    PrimaryKeyConstraint(role_id, claim_id)
+
+role_claim = Table('role_claim', Base.metadata,
+    Column('role_id',Integer, ForeignKey('roles.id')),
+    Column('claim_id',Integer, ForeignKey('claims.id'))
+)

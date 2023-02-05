@@ -12,4 +12,12 @@ engine =create_engine(f'mysql+pymysql://{cfg["database"]["user"]}:{cfg["database
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base=declarative_base()
+
 del cfg
+
+def get_db():
+   db = SessionLocal()
+   try:
+       yield db
+   finally:
+       db.close()

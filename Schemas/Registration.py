@@ -1,8 +1,8 @@
 from pydantic import BaseModel
 
 class Registration(BaseModel):
-    email : str
-    password : str
-    name : str
-    telephoneNumber : str
-    roles:list
+    email : str=None
+    password : str=None
+    name : str=None
+    telephoneNumber : str=None
+    roles:list=None
