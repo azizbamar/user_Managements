@@ -45,7 +45,7 @@ def createAccessTokenPhone(user,password,phone,db):
         
         addToken(phoneToken,db)
         
-        return {"user":checkAccessToken(access_token),"access_token": access_token, "token_type": "Bearer","samephne":samePhone}
+        return {"user":checkAccessToken(access_token),"access_token": access_token, "token_type": "Bearer"}
     else:
         raise HTTPException(status_code=400, detail="wrong email or password")
 
@@ -55,9 +55,10 @@ def addToken(token,db):
     try:
             db.add(token)
             db.commit()
+            return dict({"detail":"Token addded"})
             
     except exc.IntegrityError as e:
-            raise HTTPException(status_code=400,detail="Phone already Connected")
+            raise HTTPException(status_code=400,detail="Phone already connected")
 
 # CHECK ACCESS TOKEN VALIDITY
 def checkAccessToken(token : str = Header(...)):
@@ -93,6 +94,7 @@ def invalidateToken(db,token):
               db.query(Token).filter(Token.token == token).delete()
             
         db.commit()
+        return dict({"detail":"Logout succedded"})
     except JWTError:
         raise HTTPException(status_code=400,detail="invalid token")
 

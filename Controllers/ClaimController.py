@@ -17,10 +17,9 @@ def add_Claim(claimDesription,db):
         if  claimDesription is None :
             raise ValueError("all fields are required") 
         claim=Claim(description=claimDesription)
-    
         db.add(claim)
         db.commit()
-        return "register succeded"
+        return dict({"detail":"register succeded"})
     except ValueError as ve:
      raise HTTPException(status_code=422,detail=str(ve))
     except Exception as e:
@@ -31,11 +30,15 @@ def add_Claim(claimDesription,db):
 
 def removeClaim(db,id_claim):
     try :
-         db.query(Claim).filter(Claim.id == id_claim).delete()
-         db.commit()
-         return "Claim Deleted"
-    except AttributeError as e:
-        raise HTTPException (status_code=400,detail="Claim not found") 
+         claim=getClaimById(db,id_claim)
+         if(claim):
+            db.query(Claim).filter(Claim.id == id_claim).delete()
+            db.commit()
+            return dict({"detail":"Claim deleted"})
+         else :
+            raise ValueError("Claim not found") 
+    except ValueError as e:
+        raise HTTPException (status_code=400,detail=str(e)) 
     except Exception as e:    
         raise  HTTPException (status_code=500,detail="Error has been Occured")  
 
@@ -44,13 +47,10 @@ def update_Claim(id_claim,claimDesription,db):
     try:
         if  claimDesription is None :
             raise ValueError("No field updated") 
-        
-        
         claim=getClaimById(db,id_claim)
-        
         claim.description=claimDesription
         db.commit()
-        return "Claim Updated"
+        return dict({"detail":"Claim updated"})
     except ValueError as ve:
      raise HTTPException(status_code=422,detail=str(ve))
     except Exception as e:

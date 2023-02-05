@@ -20,6 +20,7 @@ def add_role(role,db):
     
         db.add(role)
         db.commit()
+        return dict({"detail":"register succedded"})
     except IntegrityError as e:
         # Handle the error
         db.rollback()
@@ -74,6 +75,7 @@ def delete_role(role_id,db):
         role=get_role(role_id,db) 
         db.delete(role)
         db.commit()
+        return dict({"detail":"Role deleted"})
     except AttributeError as e:
         raise HTTPException (status_code=400,detail="role not found")  
     except Exception as e:

@@ -25,7 +25,7 @@ async def UpdateClaim(idClaim:int,des : str, db : Session = Depends(get_db)):
 
 
 
-@claimRouter.put('/deleteClaim/{idClaim}')
+@claimRouter.delete('/deleteClaim/{idClaim}')
 async def UpdateClaim(idClaim:int, db : Session = Depends(get_db)):
    
    return  ClaimController.removeClaim(db,idClaim)
