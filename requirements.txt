@@ -6,3 +6,5 @@ bcrypt
 PyJWT
 flask-sqlalchemy
 jose
+pytest
+pydantic[email]

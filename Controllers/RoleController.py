@@ -1,23 +1,13 @@
 from fastapi import HTTPException
 from models.Role import Role
 from sqlalchemy.exc import IntegrityError
-from Controllers.ClaimController import getClaimById
-
-def CreateListClaims(listIdClaims,db):
-        listClaims=list()
-        for idClaim in listIdClaims:
-            listClaims.append(getClaimById(db,idClaim))
-        return listClaims
-
+import json
+from fastapi.encoders import jsonable_encoder
 
 def add_role(role,db):
     try:
-        if role.name is None or  role.claimsId is None  :
-            raise ValueError("all firlds are required") 
-        listClaimsId=role.claimsId
-        lClaims=CreateListClaims(listIdClaims=listClaimsId,db=db)
-        role = Role(name=role.name,claims=lClaims)
-    
+        role = jsonable_encoder(role)
+        role = Role(name=role['name'],claims=json.dumps(role['claims']))
         db.add(role)
         db.commit()
         return dict({"detail":"register succedded"})
@@ -30,8 +20,7 @@ def add_role(role,db):
     except Exception as e:
         # Handle the error
         db.rollback()
-        raise HTTPException (status_code=500,detail="Error has been Occured") 
-
+        raise HTTPException (status_code=500,detail="Error has been occured" + e) 
 
 def get_role(role_id,db):
    try : 
@@ -42,35 +31,25 @@ def get_role(role_id,db):
    except Exception as e:
         # Handle the error
         raise  HTTPException (status_code=500,detail="Error has been Occured")  
+
+
 def update_role(r, role_id,db):
     try:
+        r = jsonable_encoder(r)
         role = get_role(role_id,db)
-        if  ( not r.name is  None or not  r.claimsId  is  None):
-            if not (r.name is  None):
-                role.name=r.name
-            if not(r.claimsId is None):
-                listClaimsId=r.claimsId
-                listClaims=CreateListClaims(listClaimsId,db)
-                role.claims=listClaims
+        print(role)
+        print(r)
+        if (role):
+            role.name = r['name']
+            role.claims = r['claims']
             db.commit()
-            role =get_role(role_id,db)
-            return role
-        else :
-            return dict({'detail':"No field updated"})
-    except AttributeError as e:
-        raise HTTPException (status_code=400,detail="role not found") 
- 
-    except IntegrityError as e:
-        # Handle the error
-        db.rollback()
-        raise HTTPException (status_code=409,detail="claim not found") 
+            return "role updated successfully"
+        else:
+           raise HTTPException(status_code=404 , detail="role not found")
     except Exception as e:
-        # Handle the error
-        db.rollback()
-        return "Error: " + str(e)
+       raise HTTPException(status_code=400 , detail="Error has been occured" + e)
 
 def delete_role(role_id,db):
-    
     try :
         role=get_role(role_id,db) 
         db.delete(role)
@@ -82,4 +61,9 @@ def delete_role(role_id,db):
         # Handle the error
         db.rollback()
         raise  HTTPException (status_code=500,detail="Error has been Occured")        
-    
+
+def getRoleByName(db,name):
+   try: 
+    return db.query(Role).filter(Role.name == name).first()
+   except Exception :
+        raise  HTTPException (status_code=500,detail="Error has been Occured")  

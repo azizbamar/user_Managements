@@ -2,10 +2,10 @@
   "database": {
     "__comment": "mycomment",
     "user": "root",
-    "password": "SBM4711sbm12345$%!",
+    "password": "",
     "ip": "127.0.0.1",
-    "port": "3306",
-    "dbname": "testdbpfe"
+    "port": "3304",
+    "dbname": "testpfe"
   },
   "app": {
     "host": "0.0.0.0",

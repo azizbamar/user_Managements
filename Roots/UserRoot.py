@@ -11,6 +11,7 @@ userRooter = APIRouter()
 @userRooter.post('/user_sign_up')
 async def signUp(request : Registration, db : Session = Depends(get_db)):
    return  UserController.signUp(request,db)
+
 # Web Sign In
 @userRooter.post('/user_sign_in')
 async def signIn(request : Authentification, db : Session = Depends(get_db)):

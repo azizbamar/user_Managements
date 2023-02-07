@@ -9,7 +9,7 @@ from jose import jwt,JWTError
 from sqlalchemy import exc
 from database.database import SessionLocal,get_db
 from models.Phone import Phone
-from models.Token import PhoneToken, Token
+from models.Token import Token
 from models.User import User
 from models.Role import Role
 from sqlalchemy.orm import Session
@@ -28,28 +28,63 @@ def createAccessToken(user,password,db):
         return {"user":checkAccessToken(access_token),"access_token": access_token, "token_type": "Bearer"}
     else:
         raise HTTPException(status_code=400, detail="wrong email or password")
+    
+
+def createAccessTokenWithoutPhone(user,password,db):
+    payload =createPayload(user,60)
+    if Hasher.verify_password(password, user.password):
+        access_token = jwt.encode(payload, "secret", algorithm="HS256")
+        userHasPhone = db.query(Phone).filter(Phone.user_id == user.id).first()
+        if not (userHasPhone) or (userHasPhone.uid!= None):
+            phone = Phone(phoneToken = access_token , user = user)
+            db.add(phone)
+            db.commit()
+            return access_token
+        else:
+            raise HTTPException(status_code= 400 , detail="unhautirized")
+
+        
+
+
 
 
 # CREATE ACCESS TOKEN FOR PHONE
 def createAccessTokenPhone(user,password,phone,db):
     payload =createPayload(user,60)
     if Hasher.verify_password(password, user.password):
-        access_token = jwt.encode(payload, "secret", algorithm="HS256")
-        phoneToken = PhoneToken(token = access_token ,user = user,phone_id = phone.uid)
-        
-        createPhoneIfNotExist(phone=phone,user=user,db=db)
-        samePhone = db.query(Phone).filter(Phone.uid == phone.uid).first()
-        if not(samePhone):
-          raise HTTPException(status_code=400,detail="phone already connected")
-
-        
-        addToken(phoneToken,db)
-        
-        return {"user":checkAccessToken(access_token),"access_token": access_token, "token_type": "Bearer"}
+        access_token = jwt.encode(payload, "secret", algorithm="HS256")        
+        if  not (createPhoneIfNotExist(phone=phone,phoneToken = access_token ,user=user,db=db)):
+            samePhone = db.query(Phone).filter(Phone.uid == phone.uid).first()
+            if (samePhone):
+                tokenvalid= checkPhoneAccessToken(samePhone.phoneToken,samePhone.uid,db)
+                if not (tokenvalid):
+                    samePhone.phoneToken = access_token
+                    db.commit()
+                else:
+                    raise HTTPException(status_code=400,detail="unhaoutorized")
+            else:
+                raise HTTPException(status_code=400,detail="unhaoutorized")
+        return {"user":"checkAccessToken(fffff)","access_token": access_token, "token_type": "Bearer"}
     else:
         raise HTTPException(status_code=400, detail="wrong email or password")
 
-
+def checkPhoneAccessToken(phoneToken,uid,db):
+    try:
+        if(phoneToken):
+            decoded_token = jwt.decode(phoneToken, "secret",algorithms=['HS256'])
+            if (decoded_token):
+                if (time.time() < decoded_token['exp']):
+                    phone = db.query(Phone).filter(Phone.uid == uid).first()
+                    tokenExist = phone.phoneToken
+                    if (tokenExist):
+                        return True
+                    else:
+                        return False
+            else:
+                raise HTTPException(status_code=400 , detail= "session expired")
+    except JWTError:
+        raise HTTPException(status_code=500 , detail= "Error as been occured")
+     
 # ADD TOKEN 
 def addToken(token,db):
     try:
@@ -82,43 +117,33 @@ def checkAccessToken(token : str = Header(...)):
 def invalidateToken(db,token):
     try:
         decoded_token = jwt.decode(token, "secret",algorithms=['HS256'])
-       
         decoded_token["exp"]=0
-        
         if (decoded_token):
-            
             phonetoken=db.query(PhoneToken).filter(PhoneToken.token == token).delete()
-
             if not phonetoken:
-        
               db.query(Token).filter(Token.token == token).delete()
-            
         db.commit()
         return dict({"detail":"Logout succedded"})
     except JWTError:
         raise HTTPException(status_code=400,detail="invalid token")
 
 # CREATE PHONE IF NOT EXIST
-def createPhoneIfNotExist(phone,user,db):
-   try: 
-    UserPhoneExist = db.query(Phone).filter(Phone.user_id == user.id).first()
+def createPhoneIfNotExist(phone,phoneToken,user,db):
+    try: 
+        UserPhoneExist = db.query(Phone).filter(Phone.user_id == user.id).first()
+        if not (UserPhoneExist):
+            phone = Phone(uid = phone.uid,user = user,modele=phone.modele,osVersion = phone.osVersion, phoneToken = phoneToken )
+            try :
+                db.add(phone)
+                db.commit()
+                return True
+            except Exception :
+                raise  HTTPException (status_code=409,detail="Phone already exist") 
+        else:
+            return False
+    except Exception :
+        raise  HTTPException (status_code=500,detail="Error Has been Occured")  
 
-    if not (UserPhoneExist):
-        
-    
-        phone = Phone(uid = phone.uid,user = user,modele=phone.modele,androidVersion=phone.androidVersion)
-        try :
-            db.add(phone)
-            
-            db.commit()
-        except Exception :
-
-            raise  HTTPException (status_code=409,detail="Phone already exist") 
-
-
-   except Exception :
-
-        raise  HTTPException (status_code=500,detail="Error Has been Occured")      
 
 
     

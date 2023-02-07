@@ -1,3 +1,6 @@
+from typing import Optional
 from pydantic import BaseModel
 class ClaimSchema(BaseModel):
-    description :str
+    User :str
+    Role :str
+    Phone :str

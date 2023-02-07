@@ -1,9 +1,9 @@
-from pydantic import BaseModel
+from pydantic import BaseModel,EmailStr
 from typing import Union
 from Schemas.PhoneSchema import PhoneSchema
 class PhoneAuthentification(BaseModel):
-    email : str=None
-    password : str=None
-    #configurer dans angular
-    rememberME : bool=None
-    phone :PhoneSchema=None
+    email : EmailStr
+    password : str
+    #configured dans angular
+    rememberME : bool
+    phone :PhoneSchema

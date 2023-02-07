@@ -1,4 +1,5 @@
-from Controllers.TokenController import createAccessToken,createAccessTokenPhone, invalidateToken
+from Controllers.RoleController import getRoleByName
+from Controllers.TokenController import createAccessToken,createAccessTokenPhone, createAccessTokenWithoutPhone, invalidateToken
 from Schemas.Authentification import Authentification
 from Schemas.PhoneAuthentification import PhoneAuthentification
 from Schemas.Hasher import hash_password
@@ -12,41 +13,31 @@ from fastapi import FastAPI,Depends,HTTPException,Header
 from Schemas.UserSchema import UserSchema
 from models.Role import Role
 from models.Phone import Phone
-def getRoleByName(db,name):
-   try: 
-    return db.query(Role).filter(Role.name == name).first()
-   except Exception :
-        raise  HTTPException (status_code=500,detail="Error has been Occured")  
+from jose import jwt,JWTError
+
+
+
 
 # sign Up
 
-
 def signUp(request : Registration ,db):
-    try:
-        if request.email is None or request.telephoneNumber is None or request.password is None or request.roles is None or request.name is None:
-            raise ValueError("all firlds are required")
-        
+    try:       
         hashed_password = hash_password(request.password)
         listRolesNames=request.roles
-        print(listRolesNames)
         listRoles=list()
         for role in listRolesNames  :
-            
             print(getRoleByName(db,role))
             listRoles.append(getRoleByName(db,role))
-        print(listRoles)
-        user = User(email = request.email , password = hashed_password, name = request.name ,telephoneNumber = request.telephoneNumber,roles=listRoles)
-        print(user.roles)
-        
+
+        user = User(email = request.email , password = hashed_password, name = request.name ,telephoneNumber = request.telephoneNumber,roles=listRoles)        
+        print(user.telephoneNumber)
         db.add(user)
         db.commit() 
         return {"detail":"register succedded"}
     except IntegrityError as e:
-        raise HTTPException(status_code=400,detail="this email is used")
+        raise HTTPException(status_code=400,detail="email already in use")
     except FlushError as e:
         raise HTTPException(status_code=400,detail="role not found")
-    except ValueError as ve:
-        raise HTTPException(status_code=422, detail=str(ve))
 
 #login for guests and web application
 
@@ -70,27 +61,36 @@ def signIn(request : Authentification , db):
 #login for phones
 
 def PhonesignIn(request :PhoneAuthentification  , db):
-    try:
-        if request.email is None or  request.password is None or request.rememberME is None:
-            raise ValueError("all firlds are required") 
         user = db.query(User).filter(User.email == request.email).first()
-        if  (user):
-                if not (request.rememberME):
-                    token=createAccessToken(user,request.password,db)
-                    return  token
-                else:
-                    token=createAccessTokenPhone(user,request.password,request.phone,db)
-                    return token
+        if (user):
+            if not (request.rememberME):
+                return createAccessTokenWithoutPhone(user,request.password,db)
+                
+            else:
+                token=createAccessTokenPhone(user,request.password,request.phone,db)
+                return token
         else:
-                raise HTTPException(status_code=400,detail="wrong email or password")
+            raise HTTPException(status_code=400,detail="wrong email or password")
 
-    except ValueError as ve:
-     raise HTTPException(status_code=422,detail=str(ve))
+    
 
 #logout
 
 def signOut(db,token):
-    return invalidateToken(db,token)
+    try:
+        phone = db.query(Phone).filter(Phone.phoneToken == token).first()
+        if (phone.uid != None):
+
+            phone.phoneToken = None
+            db.commit()
+        else:
+            db.query(Phone).filter(Phone.phoneToken == token).delete()
+            db.commit()
+        return {"detail":"sign out succedded"}
+    except Exception:
+        raise HTTPException(status_code=404,detail="token not found")
+
+        
 
 #find By User Id
 
