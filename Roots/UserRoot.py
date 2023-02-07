@@ -17,15 +17,25 @@ async def signUp(request : Registration, db : Session = Depends(get_db)):
 async def signIn(request : Authentification, db : Session = Depends(get_db)):
    return  UserController.signIn(request,db)
 # Phone Sign In
-@userRooter.post('/phone/user_sign_in')
+@userRooter.post('/user_sign_in_from_phone')
 async def signIn(request : PhoneAuthentification, db : Session = Depends(get_db)):
-   return  UserController.PhonesignIn(request,db)
+   return  UserController.signInFromPhone(request,db)
 
-# logout
-
+# Web Sign Out
 @userRooter.post('/user_sign_out')
-async def logout(db : Session = Depends(get_db),token : str = Header(...)):
+async def signIn(db : Session = Depends(get_db),token : str = Header(...)):
    return  UserController.signOut(db,token)
+
+# Phone Sign Out
+@userRooter.post('/user_sign_out_from_phone')
+async def logout(db : Session = Depends(get_db),token : str = Header(...)):
+   return  UserController.signOutFromPhone(db,token)
+
+#update account
+@userRooter.post('/update_account')
+async def updateUser(request : Registration,db : Session = Depends(get_db),token : str = Header(...)):
+   return  UserController.updateUser(request,token,db)
+
 #delete Phone
 @userRooter.post('/removePhone/{user_id}')
 async def deletePhone(user_id:int,db : Session = Depends(get_db)):

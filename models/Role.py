@@ -3,8 +3,7 @@ from database.database import  Base
 from sqlalchemy import Column,Integer,String,ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import JSON
-from models.User import user_roles,User
-
+from models.User import user_roles
 
 class Role(Base):
     __tablename__ = "roles"

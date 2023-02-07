@@ -1,9 +1,7 @@
 from pydantic import BaseModel
 from sqlalchemy import Column,Integer,String,ForeignKey
 from sqlalchemy.orm import relationship
-
 from database.database import Base
-
 
 class Phone(Base):
     __tablename__ = "phone"

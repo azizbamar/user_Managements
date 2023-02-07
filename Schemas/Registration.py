@@ -7,7 +7,7 @@ class Registration(BaseModel):
     email: EmailStr
     password: str
     name: str
-    telephoneNumber: str
+    telephoneNumber: Optional[str]
     roles:Optional[list]=[]
     
     @validator("telephoneNumber")
