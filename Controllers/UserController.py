@@ -1,5 +1,5 @@
 from Controllers.RoleController import getRoleByName
-from Controllers.TokenController import checkAccessToken, createAccessToken,createAccessTokenPhone, createAccessTokenWithoutPhone
+from Controllers.TokenController import checkAccessToken, createAccessToken,createAccessTokenPhone
 from Schemas.Authentification import Authentification
 from Schemas.PhoneAuthentification import PhoneAuthentification
 from Schemas.Hasher import hash_password,verify_password
@@ -15,7 +15,11 @@ from Schemas.UserSchema import UserSchema
 from models.Role import Role
 from models.Phone import Phone
 from jose import jwt,JWTError
-
+from errors import *
+import asyncio
+from fastapi.responses import JSONResponse
+from fastapi_mail import MessageSchema,FastMail
+from confEmail import *
 # sign Up
 def signUp(request : Registration ,db):
     try:       
@@ -25,16 +29,15 @@ def signUp(request : Registration ,db):
         for role in listRolesNames  :
             print(getRoleByName(db,role))
             listRoles.append(getRoleByName(db,role))
-
         user = User(email = request.email , password = hashed_password, name = request.name ,telephoneNumber = request.telephoneNumber,roles=listRoles)        
         print(user.telephoneNumber)
         db.add(user)
         db.commit() 
         return {"detail":"register succedded"}
     except IntegrityError as e:
-        raise HTTPException(status_code=400,detail="email already in use")
+        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED,detail="email already in use")
     except FlushError as e:
-        raise HTTPException(status_code=400,detail="role not found")
+        raise HTTPException(status_code=HTTP_404_NOT_FOUND,detail="role not found")
 #UPDATE ACCOUNT
 def updateUser(request : Registration,token , db):
     try:
@@ -53,9 +56,9 @@ def updateUser(request : Registration,token , db):
             db.commit()
             return "account updated"
         else :
-            raise HTTPException(status_code=400,detail="invalid token")    
+            raise HTTPException(status_code=HTTP_401_UNAUTHORIZED,detail="invalid token")    
     except JWTError as e:
-        raise HTTPException(status_code=400,detail="Error has been occured : " +e)
+        raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,detail="Error has been occured : " +e)
 #login for guests and web application
 def signIn(request : Authentification , db):
  try :   
@@ -64,7 +67,7 @@ def signIn(request : Authentification , db):
         token=createAccessToken(user,request.password,db)
         return  token
    else:
-        raise HTTPException(status_code=400,detail="wrong email or password")
+        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED,detail="wrong email or password")
  except ValueError as ve:
     raise HTTPException(status_code=422,detail=str(ve))
 
@@ -74,18 +77,15 @@ def signOut(db,token):
         db.commit()
         return {"detail" : "sign out successful"}
     except JWTError as e:
-        raise HTTPException(status_code=400 , detail="token not found")
+        raise HTTPException(status_code=HTTP_400_BAD_REQUEST , detail="token not found")
 #login for phones
 def signInFromPhone(request :PhoneAuthentification  , db):
         user = db.query(User).filter(User.email == request.email).first()
         if (user):
-            if not (request.rememberME):
-                return createAccessTokenWithoutPhone(user,request.password,db)
-            else:
-                token=createAccessTokenPhone(user,request.password,request.phone,db)
-                return token
+            token=createAccessTokenPhone(user,request.password,request.phone,request.rememberME,db)
+            return {"access_token" : token}
         else:
-            raise HTTPException(status_code=400,detail="wrong email or password")
+            raise HTTPException(status_code=HTTP_401_UNAUTHORIZED,detail="wrong email or password")
         
 #phone logout
 def signOutFromPhone(db,token):
@@ -100,7 +100,7 @@ def signOutFromPhone(db,token):
             db.commit()
         return {"detail":"sign out succedded"}
     except Exception:
-        raise HTTPException(status_code=404,detail="token not found")
+        raise HTTPException(status_code=HTTP_404_NOT_FOUND,detail="token not found")
     
 #find By User Id
 def getUserById(id_user):
@@ -108,9 +108,9 @@ def getUserById(id_user):
       user=  db.query(User).filter(User.id== id_user).first()
       return user  
     except AttributeError as e:
-        raise HTTPException (status_code=400,detail="User not found") 
+        raise HTTPException (status_code=HTTP_404_NOT_FOUND,detail="User not found") 
     except Exception as e:    
-        raise  HTTPException (status_code=500,detail="Error has been Occured")  
+        raise  HTTPException (status_code=HTTP_500_INTERNAL_SERVER_ERROR,detail="Error has been Occured")  
     
 #filtration par Name
 def getUsesrByName(name,db):
@@ -121,9 +121,9 @@ def getUsesrByName(name,db):
       lusers.append(users) 
       return lusers
     except AttributeError as e:
-        raise HTTPException (status_code=400,detail="User not found") 
+        raise HTTPException (status_code=HTTP_404_NOT_FOUND,detail="User not found") 
     except Exception as e:    
-        raise  HTTPException (status_code=500,detail="Error has been Occured")  
+        raise  HTTPException (status_code=HTTP_500_INTERNAL_SERVER_ERROR,detail="Error has been Occured")  
     
 # remove a phone from user
 def removePhoneForUser(user_id,db):
@@ -132,10 +132,42 @@ def removePhoneForUser(user_id,db):
       db.commit()
       return dict({"detail":"Phone deleted"})
     except AttributeError as e:
-        raise HTTPException (status_code=400,detail="User not found") 
+        raise HTTPException (status_code=HTTP_404_NOT_FOUND,detail="User not found") 
     except Exception as e:    
-        raise  HTTPException (status_code=500,detail="Error has been Occured")  
-      
+        raise  HTTPException (status_code=HTTP_500_INTERNAL_SERVER_ERROR,detail="Error has been Occured")  
+    
+
+#RESET PASSWORD
+def resetPassword(newPassword,user,db):
+    try:
+        user = db.query(User).filter(User.id == user.id).first()
+        if (user):
+            user.password = hash_password(newPassword)
+            try:
+                db.commit()
+            except:
+                raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR , detail="database error")
+        else:
+            raise HTTPException(status_code=HTTP_404_NOT_FOUND , detail= "user not found")
+    except Exception :
+        raise HTTPException(status_code= HTTP_500_INTERNAL_SERVER_ERROR , detail= "Error has been occured")
+from pydantic import BaseModel,EmailStr
+from typing import List
+
+class EmailSchema(BaseModel):
+   email: List[EmailStr]
+async def forgetPassword(email):
+    html = """
+<p>Thanks for using Fastapi-mail</p> 
+"""
+    message = MessageSchema(
+    subject="Fastapi-Mail module",
+    recipients=email.dict().get("email"),
+    body=html,
+    subtype=MessageType.html)
+    fm = FastMail(conf)
+    fm.send_message(message)
+    return JSONResponse(status_code=200, content={"message": "email has been sent"})  
 
 
- 
+

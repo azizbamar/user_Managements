@@ -8,3 +8,6 @@ flask-sqlalchemy
 jose
 pytest
 pydantic[email]
+requests
+phonenumbers
+fastapi-mail
