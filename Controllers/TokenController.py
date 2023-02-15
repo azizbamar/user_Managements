@@ -50,12 +50,16 @@ def createAccessToken(user,password,db):
 # CREATE ACCESS TOKEN FOR PHONE
 def createAccessTokenPhone(user,password,phone,rememberMe,db):
     import pdb; pdb.set_trace()
-    payload =createPayload(user,60)
+    
     if Hasher.verify_password(password, user.password):
-        access_token = jwt.encode(payload, SECRET, algorithm=ALGORITHM)
+        
         phoneExist = db.query(Phone).filter(Phone.uid == phone.uid).first()
         if (phoneExist):
             if (phoneExist.rememberMe):
+                #60 days=60*24 hour
+                nbhours=24*60
+                payload =createPayload(user,nbhours)
+                access_token = jwt.encode(payload, SECRET, algorithm=ALGORITHM)
                 samePhone = db.query(Phone).filter(Phone.user_id == user.id).first()
                 if (samePhone):
                     samePhone.rememberMe = rememberMe
@@ -65,6 +69,9 @@ def createAccessTokenPhone(user,password,phone,rememberMe,db):
                 else:
                     raise HTTPException(status_code=HTTP_401_UNAUTHORIZED,detail=("UNAUTHORIZED"))
             else:
+                # token :one day: 24 hour
+                payload =createPayload(user,24)
+                access_token = jwt.encode(payload, SECRET, algorithm=ALGORITHM)
                 phoneExist.user = user
                 phoneExist.rememberMe = rememberMe
                 phoneExist.phoneToken = access_token
@@ -161,7 +168,7 @@ def createPhoneIfNotExist(phone,phoneToken,user,rememberMe,db):
 def createPayload(user,nbHour):
     return {
             "email" : user.email,
-            "exp" : time.time()+300
+            "exp" : time.time()+(nbHour*60*60)
         }
 # GET USER DATA
 def get_user(email: str,db):

@@ -33,3 +33,9 @@ async def UpdateRole(idRole:int,role : RoleSchema, db : Session = Depends(get_db
 async def UpdateRole(idRole:int, db : Session = Depends(get_db)):
    
    return  RoleController.delete_role(idRole,db)
+   
+
+@roleRouter.get('/role/getAllRolesNames')
+async def getRoles(db : Session = Depends(get_db)):
+   
+   return  RoleController.getAllRoleNames(db)

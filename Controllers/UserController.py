@@ -71,6 +71,20 @@ def signIn(request : Authentification , db):
  except ValueError as ve:
     raise HTTPException(status_code=422,detail=str(ve))
 
+
+
+def getAllUsers(db):
+    try:
+        users= db.query(User).all()
+        listUsers= list(users)
+        return listUsers
+    except Exception:
+        raise  HTTPException (status_code=HTTP_500_INTERNAL_SERVER_ERROR,detail="Error has been Occured")  
+
+
+
+
+
 def signOut(db,token):
     try:
         db.query(Token).filter(Token.token == token).delete()

@@ -67,3 +67,14 @@ def getRoleByName(db,name):
     return db.query(Role).filter(Role.name == name).first()
    except Exception :
         raise  HTTPException (status_code=HTTP_500_INTERNAL_SERVER_ERROR,detail="Error has been Occured")  
+
+def getAllRoleNames(db):
+    try:
+        roles= db.query(Role).all()
+        listRoles= list(roles)
+        listRolesName=list()
+        for role in listRoles:
+            listRolesName.append(role.name)
+        return listRolesName
+    except Exception:
+        raise  HTTPException (status_code=HTTP_500_INTERNAL_SERVER_ERROR,detail="Error has been Occured")  

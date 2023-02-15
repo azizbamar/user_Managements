@@ -68,6 +68,10 @@ async def check_token(db : Session = Depends(get_db),token : str = Header(...)):
    #print(f"{Header}")
    return  TokenController.checkPhoneAccessToken(token,db)
 
+@userRooter.get('/getAllUsers')
+async def getAllUsers(db : Session = Depends(get_db)):
+   return  UserController.getAllUsers(db)
+
 @userRooter.get('/')
 async def home():
    return  "Welcome"
