@@ -7,7 +7,7 @@ class Phone(Base):
     __tablename__ = "phone"
     id = Column(Integer , primary_key= True , index= True)
     uid = Column(String(255) ,unique = True, nullable= True)
-    modele=Column(String(255),nullable= True)
+    model=Column(String(255),nullable= True)
     osVersion=Column(String(255),nullable=True)
     phoneToken = Column(String(255),unique=True)
     rememberMe = Column(Boolean,unique=False)

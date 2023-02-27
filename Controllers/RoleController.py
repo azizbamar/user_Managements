@@ -1,9 +1,17 @@
+
 from fastapi import HTTPException
+from flask import session
+
+
+from database.database import SessionLocal
 from models.Role import Role
 from sqlalchemy.exc import IntegrityError
 import json
 from fastapi.encoders import jsonable_encoder
+from sqlalchemy.orm import Session
+
 from errors import *
+from models.User import User
 def add_role(role,db):
     try:
         role = jsonable_encoder(role)
@@ -24,8 +32,13 @@ def add_role(role,db):
 
 def get_role(role_id,db):
    try : 
-    role = db.query(Role).get(role_id)
-    return role
+    if(role_id):
+        
+        role = db.query(Role).get(role_id)
+        return role
+    return None
+
+    
    except AttributeError as e:
         raise HTTPException (status_code=HTTP_404_NOT_FOUND,detail="role not found") 
    except Exception as e:
@@ -67,6 +80,46 @@ def getRoleByName(db,name):
     return db.query(Role).filter(Role.name == name).first()
    except Exception :
         raise  HTTPException (status_code=HTTP_500_INTERNAL_SERVER_ERROR,detail="Error has been Occured")  
+
+
+#find By User Id
+def getUserById(id_user,db):
+    try:
+      user=  db.query(User).filter(User.id== id_user).first()
+      return user  
+    except AttributeError as e:
+        raise HTTPException (status_code=HTTP_404_NOT_FOUND,detail="User not found") 
+    except Exception as e:    
+        raise  HTTPException (status_code=HTTP_500_INTERNAL_SERVER_ERROR,detail="Error has been Occured")  
+
+def getUserRolesById(user_id,db:Session):
+        try :
+            user=getUserById(user_id,db)
+            role=get_role(user.role_id,db)
+            if role:
+                return role.name
+            else :return None
+            
+        except AttributeError as e:
+            raise HTTPException (status_code=HTTP_404_NOT_FOUND,detail="user not found")  
+        except Exception as e:
+        # Handle the error
+         db.rollback()
+         raise  HTTPException (status_code=HTTP_500_INTERNAL_SERVER_ERROR,detail="Error has been Occured")   
+
+
+        
+
+
+
+
+
+     
+
+
+
+
+
 
 def getAllRoleNames(db):
     try:

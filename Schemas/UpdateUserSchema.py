@@ -1,15 +1,15 @@
 import re
 from pydantic import BaseModel,EmailStr,validator
 from typing import Optional
-
 import phonenumbers
 
-class Registration(BaseModel):
-    email: EmailStr
-    name: str
+class UpdateSchema(BaseModel):
+    email: Optional[EmailStr]
+    password: Optional[str]
+    name: Optional[str]
     phoneNumber: Optional[str]
     role:Optional[str]
-    authorization:Optional[bool]
+    authorization:bool
     
     @validator("phoneNumber")
     def phone_validation(cls, v):

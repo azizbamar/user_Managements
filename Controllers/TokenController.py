@@ -15,7 +15,7 @@ from models.User import User
 from contextlib import contextmanager
 from errors import *
 def createAccessToken(user,password,db):
-    payload =createPayload(user,1)
+    payload =createPayload(user,24)
     if Hasher.verify_password(password, user.password):
        
         access_token = jwt.encode(payload, SECRET, algorithm=ALGORITHM)
@@ -120,8 +120,11 @@ def checkAccessToken(token):
     with contextmanager(get_db)() as db :
         try:
             decoded_token = jwt.decode(token, SECRET,algorithms=ALGORITHMS)
+            print('aaa')
             if (time.time() <= decoded_token['exp']):
+                print('aaa')
                 tokenExist = db.query(Token).filter(Token.token == token).first()
+                print('aaa')
                 if (tokenExist):
                     print(time.time())
                     print(decoded_token['exp']) 
@@ -150,9 +153,9 @@ def createPhoneIfNotExist(phone,phoneToken,user,rememberMe,db):
     try: 
         UserPhoneExist = db.query(Phone).filter(Phone.user_id == user.id).first()
         if not (UserPhoneExist):
-            phone = Phone(uid = phone.uid,user = user,modele=phone.modele,osVersion = phone.osVersion, phoneToken = phoneToken ,rememberMe = rememberMe)
+            phone = Phone(uid = phone.uid,user = user,model=phone.model,osVersion = phone.osVersion, phoneToken = phoneToken ,rememberMe = rememberMe)
             try :
-                phoneHistory = PhoneHistory(uid = phone.uid,modele=phone.modele,osVersion = phone.osVersion, phoneToken = phone.phoneToken)
+                phoneHistory = PhoneHistory(uid = phone.uid,model=phone.model,osVersion = phone.osVersion, phoneToken = phone.phoneToken)
                 db.add(phoneHistory)
                 db.add(phone)
                 db.commit()
