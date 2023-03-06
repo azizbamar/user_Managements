@@ -1,3 +1,7 @@
+import inspect
+from typing import List
+from fastapi import Depends
+from flask import session
 from sqlalchemy import create_engine
 import json
 from sqlalchemy.ext.declarative import declarative_base
@@ -22,3 +26,9 @@ def get_db():
        yield db
    finally:
        db.close()
+
+
+def get_table_names(db: session = Depends(get_db)) -> List[str]:
+    inspector = inspect(db.bind)
+    return inspector.get_table_names()
+

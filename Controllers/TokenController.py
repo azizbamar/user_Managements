@@ -49,7 +49,6 @@ def createAccessToken(user,password,db):
 
 # CREATE ACCESS TOKEN FOR PHONE
 def createAccessTokenPhone(user,password,phone,rememberMe,db):
-    import pdb; pdb.set_trace()
     
     if Hasher.verify_password(password, user.password):
         
@@ -78,7 +77,17 @@ def createAccessTokenPhone(user,password,phone,rememberMe,db):
                 db.commit()
                 return access_token
         else:
+            nbhours=24
+            if (rememberMe):
+                #60 days=60*24 hour
+                nbhours=24*60
+            
+            payload =createPayload(user,nbhours)
+            access_token = jwt.encode(payload, SECRET, algorithm=ALGORITHM)
+            print(access_token)
             if (createPhoneIfNotExist(phone,access_token,user,rememberMe,db)):
+                print('aaa')
+  
                 return access_token
             else:
                 raise HTTPException(status_code=HTTP_403_FORBIDDEN,detail="Forbidden")
@@ -154,10 +163,13 @@ def createPhoneIfNotExist(phone,phoneToken,user,rememberMe,db):
         UserPhoneExist = db.query(Phone).filter(Phone.user_id == user.id).first()
         if not (UserPhoneExist):
             phone = Phone(uid = phone.uid,user = user,model=phone.model,osVersion = phone.osVersion, phoneToken = phoneToken ,rememberMe = rememberMe)
+            print('kk')
+            
             try :
                 phoneHistory = PhoneHistory(uid = phone.uid,model=phone.model,osVersion = phone.osVersion, phoneToken = phone.phoneToken)
+                db.add(phone)               
                 db.add(phoneHistory)
-                db.add(phone)
+
                 db.commit()
                 return True
             except Exception :

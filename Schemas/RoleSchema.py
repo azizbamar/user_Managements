@@ -1,7 +1,8 @@
 from pydantic import BaseModel
-from Schemas.ClaimSchema import ClaimSchema
+from typing import Any
+
 
 class RoleSchema(BaseModel):
     name :str
-    claims:ClaimSchema
+    claims:Any
 

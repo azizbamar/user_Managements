@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 class PhoneSchema(BaseModel):
     uid :str
-    modele:str
+    model:str
     osVersion:str
 
 

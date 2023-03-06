@@ -1,0 +1,14 @@
+{
+  "roles": [
+    { "value": "can read" },
+    { "value": "can update" },
+    { "value": "can delete" },
+    { "value": "can add" }
+  ],
+  "users": [
+    { "value": "can read" },
+    { "value": "can update" },
+    { "value": "can delete" },
+    { "value": "can add" }
+  ]
+}

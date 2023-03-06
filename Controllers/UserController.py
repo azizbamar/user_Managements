@@ -16,7 +16,7 @@ from sqlalchemy import text
 from database.database import SessionLocal
 from models.Token import Token
 from models.User import User
-
+from database.database import get_table_names
 from models.Role import Role
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import FlushError
@@ -39,16 +39,11 @@ from confEmail import *
 # sign Up
 def signUp(request : Registration ,db):
     try:       
-        print(request.authorization)
         pwd=generate_password(16)
-        import pdb; pdb.set_trace()
 
-        print(pwd)
         hashed_password = hash_password(pwd)
         role = getRoleByName(db,request.role)
-        print(role.name)
         user = User(email = request.email , password = hashed_password, name = request.name ,phoneNumber = request.phoneNumber,role=role,authorization=request.authorization)        
-        print(user.phoneNumber)
         db.add(user)
         db.commit() 
         subject='Account registred'
@@ -63,7 +58,6 @@ def signUp(request : Registration ,db):
 def updateUser(request :Registration,token , db):
     try:
         user = checkAccessToken(token)
-        print(user.id)
         if (user):
             user = db.query(User).filter(User.id == user.id).first()
             
@@ -84,9 +78,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 def adminUpdateUser(id, db: Session, request: UpdateSchema, token: str = Header(...)):
     try:
-        print('rr')
         if not isinstance(token, str):
-            print('ee')
             raise HTTPException(
                 status_code=HTTP_401_UNAUTHORIZED,
                 detail="Invalid token"
@@ -138,11 +130,28 @@ def adminUpdateUser(id, db: Session, request: UpdateSchema, token: str = Header(
 
 
 
+#GENERATE RANDOM PASSWORD
 def generate_password(length: int = 10):
 
     alphabet = string.ascii_letters + string.digits
     password = ''.join(secrets.choice(alphabet) for i in range(length))
     return password
+
+
+def getUserClaims(db: Session, token: str) -> List[str]:
+    try:
+        user = checkAccessToken(token)
+        role_id = user["user"].role_id
+        role = db.query(Role).filter(Role.id == role_id).first()
+
+        if role:
+            return list(dict(role.claims).keys())
+        else:
+            return []
+    except Exception:
+        return []
+
+
 def isAdmin(db: Session, token: str):
     try:
         user = checkAccessToken(token)
@@ -157,6 +166,23 @@ def isAdmin(db: Session, token: str):
             return False
     except Exception:
         return False
+
+def displayAdminDashboard(db: Session, token: str):
+    try:
+        user = checkAccessToken(token)
+        role_id=user["user"].role_id
+        
+        role = db.query(Role).filter(Role.id==role_id).first()
+        
+        if role:
+            verif=role.name != "default role" 
+            return {"isAdmin":bool(verif),"claims":getUserClaims(db,token)}
+        else:
+            return False
+    except Exception:
+        return False
+
+
 
 #login for guests and web application
 def signIn(request : Authentification , db):
@@ -177,14 +203,15 @@ def getAllUsers(limit:int,db:Session,page:int=1):
         listUsers=list()
         for i in users:
             d=dict()
+            phone=db.query(Phone).filter(Phone.user_id==i.id)
             if(getUserRolesById(i.id,db)==None):
-                     print('i1')
                      d.update({
                     'id':i.id,
                     'email':i.email,
                     'name':i.name,
                     'avatar':i.avatar,
                     'phoneNumber':i.phoneNumber,
+                    'phone':phone,
                     'role':'None',
                     'authorization':i.authorization
                     }
@@ -198,7 +225,9 @@ def getAllUsers(limit:int,db:Session,page:int=1):
                     'name':i.name,
                     'avatar':i.avatar,
                     'phoneNumber':i.phoneNumber,
+
                     'role':getUserRolesById(i.id,db),
+                    'phone':phone,
                     'authorization':i.authorization
                     }
                     )
@@ -252,7 +281,6 @@ def signOutFromPhone(db,token):
 def getUsesrByName(name,db):
     try:
       users=db.query(User).filter(User.name== name).all()
-      print(users)
       lusers= list()
       lusers.append(users) 
       return lusers
@@ -281,7 +309,6 @@ def deleteUser(user_id: int, db: Session):
   
             # Delete the user's roles first
         db.commit()
-        print('hamdoulah version 1')
         # Delete the user
         db.query(User).filter(User.id == user_id).delete()
         db.commit()
@@ -291,6 +318,11 @@ def deleteUser(user_id: int, db: Session):
         raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="User not found")
     except Exception as e:
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR, detail="Error occurred while deleting user")
+    
+def displayAdminFields(db:Session,token:str=Header(...)):
+    
+      return getUserClaims(db,token)
+
 
 #RESET PASSWORD
 def resetPassword(email,db):
@@ -319,4 +351,60 @@ def resetPassword(email,db):
 
 
 
+
+
+
+import logging
+
+def getAll(db:Session):
+    try:
+        users= db.query(User).all()
+        
+        listUsers=list()
+        for i in users:
+            try:
+                phone=db.query(Phone).filter(Phone.user_id==i.id).one_or_none()
+            except:
+                raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,detail="Phone")
+            d=dict()
+            if phone:
+                  phone_dict = {
+                     'id': phone.id,
+                     'uid': phone.uid,
+                     'model': phone.model,
+                     'osVersion': phone.osVersion
+                            }
+            if(getUserRolesById(i.id,db)==None):
+
+                
+
+                d.update({
+                    'id':i.id,
+                    'email':i.email,
+                    'name':i.name,
+                    'avatar':i.avatar,
+                    'phoneNumber':i.phoneNumber,
+                    'phone': phone_dict if phone else 'None',
+                    'role':'None',
+                    'authorization':i.authorization
+                })
+
+            else:
+                d.update({
+                    'id':i.id,
+                    'email':i.email,
+                    'name':i.name,
+                    'avatar':i.avatar,
+                    'phoneNumber':i.phoneNumber,
+                    'role':getUserRolesById(i.id,db),
+                    'phone': phone_dict if phone else 'None',
+
+                    'authorization':i.authorization
+                })
+
+            listUsers.append(d)
+        print(listUsers)
+        return listUsers
+    except Exception:
+        raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,detail="Error has been Occured")
 

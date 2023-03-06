@@ -2,9 +2,11 @@
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import smtplib
+from typing import List
 from fastapi import Depends,APIRouter, HTTPException,Header, Request
 from Controllers import UserController,TokenController
 from sqlalchemy.orm import Session
+from sqlalchemy import inspect
 # from Controllers.send_email import send_email_async
 from Schemas.Authentification import Authentification
 from Schemas.PhoneAuthentification import PhoneAuthentification
@@ -91,13 +93,24 @@ async def check_token(db : Session = Depends(get_db),token : str = Header(...)):
 async def getAllUsers(page:int,limit:int,db : Session = Depends(get_db)):
    return  UserController.getAllUsers(limit,db,page)
 
+@userRooter.get('/getAll')
+async def getAllUsers(db : Session = Depends(get_db)):
+   return  UserController.getAll(db)
+
 @userRooter.delete('/deleteUser/{id}')
 async def delete_user(id:int,db : Session = Depends(get_db)):
    return  UserController.deleteUser(id,db)
 
-@userRooter.get('/')
-async def home():
-   return  "Welcome"
+def get_table_names(db: Session = Depends(get_db)) -> List[str]:
+    inspector = inspect(db)
+    return inspector.get_table_names()
+
+@userRooter.get('/dispalyadmin')
+async def displayAdminDashboard(db:Session=Depends(get_db),token:str=Header(...)):
+ 
+
+   
+   return  UserController.displayAdminDashboard(db,token)
 
 
 

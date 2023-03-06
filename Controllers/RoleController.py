@@ -1,6 +1,7 @@
 
 from fastapi import HTTPException
 from flask import session
+from Schemas.RoleSchema import RoleSchema
 
 
 from database.database import SessionLocal
@@ -12,10 +13,10 @@ from sqlalchemy.orm import Session
 
 from errors import *
 from models.User import User
-def add_role(role,db):
+def add_role(role:RoleSchema,db):
     try:
-        role = jsonable_encoder(role)
-        role = Role(name=role['name'],claims=json.dumps(role['claims']))
+   
+        role = Role(name=role.name,claims=role.claims)
         db.add(role)
         db.commit()
         return dict({"detail":"register succedded"})
@@ -48,13 +49,11 @@ def get_role(role_id,db):
 
 def update_role(r, role_id,db):
     try:
-        r = jsonable_encoder(r)
         role = get_role(role_id,db)
-        print(role)
-        print(r)
+     
         if (role):
-            role.name = r['name']
-            role.claims = r['claims']
+            role.name = r.name
+            role.claims = r.claims
             db.commit()
             return "role updated successfully"
         else:
@@ -78,6 +77,13 @@ def delete_role(role_id,db):
 def getRoleByName(db,name):
    try: 
     return db.query(Role).filter(Role.name == name).first()
+   except Exception :
+        raise  HTTPException (status_code=HTTP_500_INTERNAL_SERVER_ERROR,detail="Error has been Occured")  
+
+def getRoleClaimsKeys(db,id):
+   try: 
+    role= db.query(Role).filter(Role.id == id).first()
+    return role.claims
    except Exception :
         raise  HTTPException (status_code=HTTP_500_INTERNAL_SERVER_ERROR,detail="Error has been Occured")  
 
@@ -131,3 +137,12 @@ def getAllRoleNames(db):
         return listRolesName
     except Exception:
         raise  HTTPException (status_code=HTTP_500_INTERNAL_SERVER_ERROR,detail="Error has been Occured")  
+
+
+def getAllRoles(db):
+    try:
+        roles= db.query(Role).all()
+        
+        return roles
+    except Exception:
+        raise  HTTPException (status_code=HTTP_500_INTERNAL_SERVER_ERROR,detail="Error has been Occured") 

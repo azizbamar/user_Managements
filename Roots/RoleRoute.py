@@ -39,6 +39,10 @@ async def getUserRoles(id:int,db : Session = Depends(get_db)):
    
    return  RoleController.getUserRolesById(user_id=id,db=db)
 
+@roleRouter.get('/roles')
+async def getAllRoles(db : Session = Depends(get_db)):
+   
+   return  RoleController.getAllRoles(db)
 
 
 @roleRouter.get('/role/getAllRolesNames')
