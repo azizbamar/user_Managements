@@ -101,16 +101,17 @@ async def getAllUsers(db : Session = Depends(get_db)):
 async def delete_user(id:int,db : Session = Depends(get_db)):
    return  UserController.deleteUser(id,db)
 
+@userRooter.delete('/deleteUserPhone/{id}')
+async def delete_user(id:int,db : Session = Depends(get_db)):
+   return  UserController.deletePhone(id,db)
+
 def get_table_names(db: Session = Depends(get_db)) -> List[str]:
     inspector = inspect(db)
     return inspector.get_table_names()
 
 @userRooter.get('/dispalyadmin')
 async def displayAdminDashboard(db:Session=Depends(get_db),token:str=Header(...)):
- 
-
-   
-   return  UserController.displayAdminDashboard(db,token)
+     return  UserController.displayAdminDashboard(db,token)
 
 
 

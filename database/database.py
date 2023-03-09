@@ -1,4 +1,5 @@
-import inspect
+from sqlalchemy.orm import Session
+from sqlalchemy import inspect,text
 from typing import List
 from fastapi import Depends
 from flask import session
@@ -20,15 +21,17 @@ Base=declarative_base()
 del cfg
 
 def get_db():
-   db = SessionLocal()
+   db=None
    
    try:
+       db = SessionLocal()
        yield db
    finally:
        db.close()
 
 
-def get_table_names(db: session = Depends(get_db)) -> List[str]:
+def get_table_names(db: Session = Depends(get_db)) -> List[str]:
     inspector = inspect(db.bind)
+    print(inspector.get_table_names())
     return inspector.get_table_names()
 

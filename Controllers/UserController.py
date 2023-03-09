@@ -143,9 +143,15 @@ def getUserClaims(db: Session, token: str) -> List[str]:
         user = checkAccessToken(token)
         role_id = user["user"].role_id
         role = db.query(Role).filter(Role.id == role_id).first()
-
+        listclaims=list()
         if role:
-            return list(dict(role.claims).keys())
+            claims=role.claims
+            
+            for item in claims:
+             
+             listclaims.append(item['object'])
+            print(listclaims)
+            return listclaims
         else:
             return []
     except Exception:
@@ -311,6 +317,11 @@ def deleteUser(user_id: int, db: Session):
         db.commit()
         # Delete the user
         db.query(User).filter(User.id == user_id).delete()
+        userPhone=db.query(Phone).filter(Phone.user_id==user_id)
+        print(userPhone)
+        if userPhone:
+          userPhone.delete()
+        
         db.commit()
         
         return {"detail": "User deleted"}
@@ -407,4 +418,13 @@ def getAll(db:Session):
         return listUsers
     except Exception:
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,detail="Error has been Occured")
+
+def deletePhone(id:int,db:Session):
+    try:
+      db.query(Phone).filter(Phone.id==id).delete()
+      db.commit()
+      return{"detail":"Phone deleted"}
+    except:
+      raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,detail="Error has been Occured")
+    
 

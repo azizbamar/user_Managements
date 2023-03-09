@@ -1,14 +1,23 @@
-{
-  "roles": [
-    { "value": "can read" },
-    { "value": "can update" },
-    { "value": "can delete" },
-    { "value": "can add" }
-  ],
-  "users": [
-    { "value": "can read" },
-    { "value": "can update" },
-    { "value": "can delete" },
-    { "value": "can add" }
-  ]
-}
+[
+
+  {
+    "name": "role",
+    "items": [
+      { "test": "false", "label": "can read", "value": "can_read_role" },
+      { "test": "false", "label": "can read", "value": "can_read_role" },
+      { "test": "false", "label": "can read", "value": "can_read_role" },
+      { "test": "false", "label": "can read", "value": "can_read_role" }
+
+          ]
+        },
+    {"name": "users",
+    "items": [
+      { "test": "false", "label": "can read", "value": "can_read_users" },
+      { "test": "false", "label": "can read", "value": "can_read_users" },
+      { "test": "false", "label": "can read", "value": "can_read_users" },
+      { "test": "false", "label": "can read", "value": "can_read_users" }
+
+              ]
+  }
+]
+[{"object": "roles", "rights": "crud"}, {"object": "users", "rights": "crud"}]

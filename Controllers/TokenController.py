@@ -68,6 +68,7 @@ def createAccessTokenPhone(user,password,phone,rememberMe,db):
                 else:
                     raise HTTPException(status_code=HTTP_401_UNAUTHORIZED,detail=("UNAUTHORIZED"))
             else:
+                
                 # token :one day: 24 hour
                 payload =createPayload(user,24)
                 access_token = jwt.encode(payload, SECRET, algorithm=ALGORITHM)
@@ -82,6 +83,7 @@ def createAccessTokenPhone(user,password,phone,rememberMe,db):
                 #60 days=60*24 hour
                 nbhours=24*60
             
+
             payload =createPayload(user,nbhours)
             access_token = jwt.encode(payload, SECRET, algorithm=ALGORITHM)
             print(access_token)

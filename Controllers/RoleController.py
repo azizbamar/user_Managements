@@ -4,7 +4,7 @@ from flask import session
 from Schemas.RoleSchema import RoleSchema
 
 
-from database.database import SessionLocal
+from database.database import SessionLocal, get_table_names
 from models.Role import Role
 from sqlalchemy.exc import IntegrityError
 import json
@@ -113,8 +113,31 @@ def getUserRolesById(user_id,db:Session):
          db.rollback()
          raise  HTTPException (status_code=HTTP_500_INTERNAL_SERVER_ERROR,detail="Error has been Occured")   
 
+def getAllClaims(db: Session):
 
-        
+    listClaims = []
+    listObjectNames=get_table_names(db)
+
+    
+    for item in listObjectNames:
+                listClaims.append({'object':item,'rights':''})
+    return listClaims
+
+
+
+
+
+
+def checkinlist(list,name):
+    test=False
+    for x in list:
+      if x['name']==name:
+          test=True
+    return test
+          
+
+
+
 
 
 
