@@ -10,15 +10,18 @@ RUN apt-get update && apt-get install -y \
     git
 
 # Créer un utilisateur non-root pour la sécurité
-RUN useradd -m devops
+RUN useradd -m myuser
 USER myuser
 
 # Définir le répertoire de travail
-WORKDIR /home/devops/app
+WORKDIR /home/myuser/app
 
 # Copier les fichiers de l'application dans le conteneur
 COPY app app
 COPY requirements.txt requirements.txt
+
+# Modifier les permissions du répertoire "app"
+RUN sudo chown -R myuser:myuser app
 
 # Installer les dépendances de l'application
 RUN pip install --upgrade pip && \
