@@ -1,11 +1,10 @@
 from fastapi import FastAPI,Depends,HTTPException
-from database.database import engine,SessionLocal,Base
 from models.User import User
 from models.Token import Token
 from models.Phone import Phone
 from models.Role import Role
 from fastapi.middleware.cors import CORSMiddleware
-
+from database.database import engine,SessionLocal,Base
 
 
 
