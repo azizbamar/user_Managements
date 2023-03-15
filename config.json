@@ -2,7 +2,7 @@
   "database": {
     "__comment": "mycomment",
     "user": "root",
-    "password": "",
+    "password": "1234",
     "ip": "172.17.0.4",
     "port": "3306",
     "dbname": "testpfe"
