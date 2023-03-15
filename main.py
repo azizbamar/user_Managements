@@ -1,5 +1,5 @@
 from fastapi import FastAPI,Depends,HTTPException
-from models.User import User
+from app.models.User import User
 from models.Token import Token
 from models.Phone import Phone
 from models.Role import Role
