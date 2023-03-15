@@ -13,6 +13,7 @@ stage('Build new image') {
             }
                
             }
+}
       }
       
   }
