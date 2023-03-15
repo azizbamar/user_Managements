@@ -122,7 +122,6 @@ def checkPhoneAccessToken(phoneToken,db):
 def checkAccessToken(token):
     with contextmanager(get_db)() as db :
         try:
-            import pdb; pdb.set_trace()
             decoded_token = jwt.decode(token, SECRET,algorithms=ALGORITHMS)
             if (time.time() <= decoded_token['exp']):
                 print(time.time()-decoded_token['exp'])
