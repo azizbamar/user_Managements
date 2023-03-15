@@ -1,46 +1,30 @@
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 import secrets
-import smtplib
-import ssl
 import string
 from Controllers.RoleController import getRoleByName, getUserRolesById
-from Controllers.TokenController import checkAccessToken, createAccessToken,createAccessTokenPhone,get_user
+from Controllers.TokenController import checkAccessToken, createAccessToken,createAccessTokenPhone
 from Controllers.send_email import send_email
 from Schemas.Authentification import Authentification
 from Schemas.PhoneAuthentification import PhoneAuthentification
-from Schemas.Hasher import hash_password,verify_password
+from Schemas.Hasher import hash_password
 from Schemas.Registration import Registration
 from sqlalchemy.orm import Session
-from sqlalchemy import text
-from database.database import SessionLocal
 from models.Token import Token
 from models.User import User
-from database.database import get_table_names
 from models.Role import Role
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import FlushError
-from fastapi import FastAPI,Depends,HTTPException,Header
-from Schemas.UserSchema import UserSchema
+from fastapi import HTTPException,Header
 from Schemas.UpdateUserSchema import UpdateSchema
 from models.Phone import Phone
-from jose import jwt,JWTError
+from jose import JWTError
 from errors import *
-import asyncio
-from fastapi.responses import JSONResponse
-
+from sqlalchemy.exc import SQLAlchemyError
 from typing import List
-from fastapi import BackgroundTasks, FastAPI
-from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
-from pydantic import BaseModel, EmailStr
-from starlette.responses import JSONResponse
-
 from confEmail import *
 # sign Up
 def signUp(request : Registration ,db):
     try:       
         pwd=generate_password(16)
-
         hashed_password = hash_password(pwd)
         role = getRoleByName(db,request.role)
         user = User(email = request.email , password = hashed_password, name = request.name ,phoneNumber = request.phoneNumber,role=role,authorization=request.authorization)        
@@ -60,10 +44,8 @@ def updateUser(request :Registration,token , db):
         user = checkAccessToken(token)
         if (user):
             user = db.query(User).filter(User.id == user.id).first()
-            
             user.password = hash_password(request.password)
             user.name = request.name
- 
             user.role = request.role
             user.phoneNumber = request.phoneNumber
             db.commit()
@@ -73,33 +55,18 @@ def updateUser(request :Registration,token , db):
     except JWTError as e:
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,detail="Error has been occured : " +e)
 
-from sqlalchemy.exc import SQLAlchemyError
-
 
 def adminUpdateUser(id, db: Session, request: UpdateSchema, token: str = Header(...)):
     try:
-        if not isinstance(token, str):
-            raise HTTPException(
-                status_code=HTTP_401_UNAUTHORIZED,
-                detail="Invalid token"
-            )
-     
         if isAdmin(db, token):
-            
-          
             user = db.query(User).filter(User.id == id).first()
-
             if user:
-            
-                
                 user.name = request.name  
                 user.authorization = request.authorization
-
                 role = db.query(Role).filter(Role.name == request.role).first()
                 user.role_id = role.id
                 user.phoneNumber = request.phoneNumber
                 db.commit()
-
                 return "account updated"
             else:
                 raise HTTPException(
@@ -110,8 +77,7 @@ def adminUpdateUser(id, db: Session, request: UpdateSchema, token: str = Header(
             raise HTTPException(
                 status_code=HTTP_401_UNAUTHORIZED,
                 detail="Access denied"
-            )
-            
+            )      
     except JWTError as e:
         raise HTTPException(
             status_code=HTTP_500_INTERNAL_SERVER_ERROR,
@@ -129,10 +95,8 @@ def adminUpdateUser(id, db: Session, request: UpdateSchema, token: str = Header(
         )    
 
 
-
 #GENERATE RANDOM PASSWORD
 def generate_password(length: int = 10):
-
     alphabet = string.ascii_letters + string.digits
     password = ''.join(secrets.choice(alphabet) for i in range(length))
     return password
@@ -146,9 +110,7 @@ def getUserClaims(db: Session, token: str) -> List[str]:
         listclaims=list()
         if role:
             claims=role.claims
-            
             for item in claims:
-             
              listclaims.append(item['object'])
             print(listclaims)
             return listclaims
@@ -162,9 +124,7 @@ def isAdmin(db: Session, token: str):
     try:
         user = checkAccessToken(token)
         role_id=user["user"].role_id
-        
-        role = db.query(Role).filter(Role.name == 'admin').first()
-        
+        role = db.query(Role).filter(Role.name == 'admin').first()        
         if role:
             verif = role_id==role.id
             return bool(verif)
@@ -177,9 +137,7 @@ def displayAdminDashboard(db: Session, token: str):
     try:
         user = checkAccessToken(token)
         role_id=user["user"].role_id
-        
         role = db.query(Role).filter(Role.id==role_id).first()
-        
         if role:
             verif=role.name != "default role" 
             return {"isAdmin":bool(verif),"claims":getUserClaims(db,token)}
@@ -187,7 +145,6 @@ def displayAdminDashboard(db: Session, token: str):
             return False
     except Exception:
         return False
-
 
 
 #login for guests and web application
@@ -231,32 +188,24 @@ def getAllUsers(limit:int,db:Session,page:int=1):
                     'name':i.name,
                     'avatar':i.avatar,
                     'phoneNumber':i.phoneNumber,
-
                     'role':getUserRolesById(i.id,db),
                     'phone':phone,
                     'authorization':i.authorization
                     }
                     )
-
-            listUsers.append(d)
-            
-            
-
+            listUsers.append(d)   
         return listUsers
     except Exception:
         raise  HTTPException (status_code=HTTP_500_INTERNAL_SERVER_ERROR,detail="Error has been Occured")  
 
-
-
-
-
 def signOut(db,token):
-    try:
-        db.query(Token).filter(Token.token == token).delete()
-        db.commit()
-        return {"detail" : "sign out successful"}
-    except JWTError as e:
-        raise HTTPException(status_code=HTTP_400_BAD_REQUEST , detail="token not found")
+        token = db.query(Token).filter(Token.token == token).first()
+        if(token):
+            db.delete(token)
+            db.commit()
+            return {"detail" : "sign out successful"}
+        else:
+            raise HTTPException(status_code=HTTP_404_NOT_FOUND , detail="token not found")
 #login for phones
 def signInFromPhone(request :PhoneAuthentification  , db):
         user = db.query(User).filter(User.email == request.email).first()
@@ -281,57 +230,44 @@ def signOutFromPhone(db,token):
     except Exception:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND,detail="token not found")
     
-
-    
+ 
 #filtration par Name
-def getUsesrByName(name,db):
-    try:
-      users=db.query(User).filter(User.name== name).all()
-      lusers= list()
-      lusers.append(users) 
-      return lusers
-    except AttributeError as e:
-        raise HTTPException (status_code=HTTP_404_NOT_FOUND,detail="User not found") 
-    except Exception as e:    
-        raise  HTTPException (status_code=HTTP_500_INTERNAL_SERVER_ERROR,detail="Error has been Occured")  
+def getUsersByName(name,db):
+    users=db.query(User).filter(User.name== name).all()
+    lusers= list()
+    lusers.append(users) 
+    return lusers
+
 
     
 # remove a phone from user
 def removePhoneForUser(user_id,db):
-
-    try:
-      db.query(Phone).filter(Phone.user_id == user_id).delete()
-      db.commit()
-      return dict({"detail":"Phone deleted"})
-    except AttributeError as e:
-        raise HTTPException (status_code=HTTP_404_NOT_FOUND,detail="User not found") 
-    except Exception as e:    
-        raise  HTTPException (status_code=HTTP_500_INTERNAL_SERVER_ERROR,detail="Error has been Occured")  
+    user = db.query(User).filter(User.id == user_id).first()
+    if(user): 
+        phone = db.query(Phone).filter(Phone.user_id == user_id).first()
+        if(phone):
+            db.delete(phone)
+            db.commit()
+            return dict({"detail":"Phone deleted"})
+        else:
+            raise HTTPException (status_code=HTTP_401_UNAUTHORIZED,detail="User has not a phone") 
+    else:
+        raise HTTPException (status_code=HTTP_401_UNAUTHORIZED,detail="User not found") 
 
 def deleteUser(user_id: int, db: Session):
-    try:
-        # Check if the user has any roles
-   
-  
-            # Delete the user's roles first
-        db.commit()
+    user = db.query(User).filter(User.id == user_id).first()
+    if(user):
         # Delete the user
-        db.query(User).filter(User.id == user_id).delete()
+        db.delete(user)
         userPhone=db.query(Phone).filter(Phone.user_id==user_id)
-        print(userPhone)
         if userPhone:
-          userPhone.delete()
-        
+            userPhone.delete() 
         db.commit()
-        
         return {"detail": "User deleted"}
-    except AttributeError:
-        raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="User not found")
-    except Exception as e:
-        raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR, detail="Error occurred while deleting user")
+    else :
+        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="User not found")
     
 def displayAdminFields(db:Session,token:str=Header(...)):
-    
       return getUserClaims(db,token)
 
 
@@ -343,7 +279,6 @@ def resetPassword(email,db):
             pwd=generate_password(16)
             subject='your new password'
             body='there is ur new password \npwd: '+pwd
-
             try:
                 user.password = hash_password(pwd)
                 db.commit()
@@ -356,21 +291,9 @@ def resetPassword(email,db):
     except Exception :
         raise HTTPException(status_code= HTTP_500_INTERNAL_SERVER_ERROR , detail= "Error has been occured")
 
-
-
-
-
-
-
-
-
-
-import logging
-
 def getAll(db:Session):
     try:
         users= db.query(User).all()
-        
         listUsers=list()
         for i in users:
             try:
@@ -386,9 +309,6 @@ def getAll(db:Session):
                      'osVersion': phone.osVersion
                             }
             if(getUserRolesById(i.id,db)==None):
-
-                
-
                 d.update({
                     'id':i.id,
                     'email':i.email,
@@ -399,7 +319,6 @@ def getAll(db:Session):
                     'role':'None',
                     'authorization':i.authorization
                 })
-
             else:
                 d.update({
                     'id':i.id,
@@ -409,10 +328,8 @@ def getAll(db:Session):
                     'phoneNumber':i.phoneNumber,
                     'role':getUserRolesById(i.id,db),
                     'phone': phone_dict if phone else 'None',
-
                     'authorization':i.authorization
                 })
-
             listUsers.append(d)
         print(listUsers)
         return listUsers
@@ -426,5 +343,3 @@ def deletePhone(id:int,db:Session):
       return{"detail":"Phone deleted"}
     except:
       raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,detail="Error has been Occured")
-    
-

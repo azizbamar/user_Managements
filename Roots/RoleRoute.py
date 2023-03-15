@@ -32,7 +32,7 @@ async def UpdateRole(idRole:int,role : RoleSchema, db : Session = Depends(get_db
 
 
 @roleRouter.put('/deleteRole/{idRole}')
-async def UpdateRole(idRole:int, db : Session = Depends(get_db)):
+async def deleteRole(idRole:int, db : Session = Depends(get_db)):
    
    return  RoleController.delete_role(idRole,db)
    
@@ -43,7 +43,6 @@ async def getUserRoles(id:int,db : Session = Depends(get_db)):
 
 @roleRouter.get('/claims/')
 async def getAllClaims(db : Session = Depends(get_db)):
-   
    return  RoleController.getAllClaims(db)
 
 @roleRouter.get('/roles')

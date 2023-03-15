@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException, Depends,Header,status
 from fastapi.requests import Request
 from fastapi.responses import JSONResponse
 # import jwt
-from jose import jwt,JWTError
+from jose import jwt,JWTError,ExpiredSignatureError
 from sqlalchemy import exc
 from database.database import SessionLocal,get_db
 from settings import ALGORITHMS, SECRET,ALGORITHM
@@ -49,9 +49,7 @@ def createAccessToken(user,password,db):
 
 # CREATE ACCESS TOKEN FOR PHONE
 def createAccessTokenPhone(user,password,phone,rememberMe,db):
-    
     if Hasher.verify_password(password, user.password):
-        
         phoneExist = db.query(Phone).filter(Phone.uid == phone.uid).first()
         if (phoneExist):
             if (phoneExist.rememberMe):
@@ -67,8 +65,7 @@ def createAccessTokenPhone(user,password,phone,rememberMe,db):
                     return access_token
                 else:
                     raise HTTPException(status_code=HTTP_401_UNAUTHORIZED,detail=("UNAUTHORIZED"))
-            else:
-                
+            else:  
                 # token :one day: 24 hour
                 payload =createPayload(user,24)
                 access_token = jwt.encode(payload, SECRET, algorithm=ALGORITHM)
@@ -82,18 +79,13 @@ def createAccessTokenPhone(user,password,phone,rememberMe,db):
             if (rememberMe):
                 #60 days=60*24 hour
                 nbhours=24*60
-            
-
             payload =createPayload(user,nbhours)
             access_token = jwt.encode(payload, SECRET, algorithm=ALGORITHM)
             print(access_token)
-            if (createPhoneIfNotExist(phone,access_token,user,rememberMe,db)):
-                print('aaa')
-  
+            if (createPhoneIfNotExist(phone,access_token,user,rememberMe,db)):  
                 return access_token
             else:
                 raise HTTPException(status_code=HTTP_403_FORBIDDEN,detail="Forbidden")
-               
     else:
         raise HTTPException(status_code=HTTP_401_UNAUTHORIZED,detail="wrong email or password")
 
@@ -130,12 +122,11 @@ def checkPhoneAccessToken(phoneToken,db):
 def checkAccessToken(token):
     with contextmanager(get_db)() as db :
         try:
+            import pdb; pdb.set_trace()
             decoded_token = jwt.decode(token, SECRET,algorithms=ALGORITHMS)
-            print('aaa')
             if (time.time() <= decoded_token['exp']):
-                print('aaa')
+                print(time.time()-decoded_token['exp'])
                 tokenExist = db.query(Token).filter(Token.token == token).first()
-                print('aaa')
                 if (tokenExist):
                     print(time.time())
                     print(decoded_token['exp']) 
@@ -145,6 +136,8 @@ def checkAccessToken(token):
                     raise HTTPException(status_code=HTTP_401_UNAUTHORIZED,detail="unauthorized")
             else:
                 print('session expired')
+                raise HTTPException(status_code=HTTP_403_FORBIDDEN , detail= "session expired")
+        except ExpiredSignatureError:
                 raise HTTPException(status_code=HTTP_403_FORBIDDEN , detail= "session expired")
         except JWTError:
             raise HTTPException(status_code=HTTP_401_UNAUTHORIZED,detail="invalid token")
@@ -164,14 +157,11 @@ def createPhoneIfNotExist(phone,phoneToken,user,rememberMe,db):
     try: 
         UserPhoneExist = db.query(Phone).filter(Phone.user_id == user.id).first()
         if not (UserPhoneExist):
-            phone = Phone(uid = phone.uid,user = user,model=phone.model,osVersion = phone.osVersion, phoneToken = phoneToken ,rememberMe = rememberMe)
-            print('kk')
-            
+            phone = Phone(uid = phone.uid,user = user,model=phone.model,osVersion = phone.osVersion, phoneToken = phoneToken ,rememberMe = rememberMe)            
             try :
                 phoneHistory = PhoneHistory(uid = phone.uid,model=phone.model,osVersion = phone.osVersion, phoneToken = phone.phoneToken)
                 db.add(phone)               
                 db.add(phoneHistory)
-
                 db.commit()
                 return True
             except Exception :

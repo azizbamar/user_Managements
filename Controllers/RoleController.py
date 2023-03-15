@@ -34,7 +34,6 @@ def add_role(role:RoleSchema,db):
 def get_role(role_id,db):
    try : 
     if(role_id):
-        
         role = db.query(Role).get(role_id)
         return role
     return None
@@ -63,22 +62,23 @@ def update_role(r, role_id,db):
 
 def delete_role(role_id,db):
     try :
-        role=get_role(role_id,db) 
-        db.delete(role)
-        db.commit()
+        try:
+            role=get_role(role_id,db)
+            db.delete(role)
+            db.commit()
+        except Exception as e:
+            raise  HTTPException (status_code=HTTP_500_INTERNAL_SERVER_ERROR,detail="Error has been Occured")  
         return dict({"detail":"Role deleted"})
-    except AttributeError as e:
-        raise HTTPException (status_code=HTTP_404_NOT_FOUND,detail="role not found")  
     except Exception as e:
-        # Handle the error
         db.rollback()
-        raise  HTTPException (status_code=HTTP_500_INTERNAL_SERVER_ERROR,detail="Error has been Occured")        
-
+        raise HTTPException (status_code=HTTP_404_NOT_FOUND,detail="role not found")
+         
 def getRoleByName(db,name):
-   try: 
-    return db.query(Role).filter(Role.name == name).first()
-   except Exception :
-        raise  HTTPException (status_code=HTTP_500_INTERNAL_SERVER_ERROR,detail="Error has been Occured")  
+   role = db.query(Role).filter(Role.name == name).first()
+   if (role):
+        return role
+   else:
+        raise  HTTPException (status_code=HTTP_404_NOT_FOUND,detail="role not found")  
 
 def getRoleClaimsKeys(db,id):
    try: 
@@ -104,8 +104,8 @@ def getUserRolesById(user_id,db:Session):
             role=get_role(user.role_id,db)
             if role:
                 return role.name
-            else :return None
-            
+            else :
+                return None
         except AttributeError as e:
             raise HTTPException (status_code=HTTP_404_NOT_FOUND,detail="user not found")  
         except Exception as e:
