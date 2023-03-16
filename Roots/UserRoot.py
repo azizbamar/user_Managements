@@ -92,8 +92,8 @@ async def getAllUsers(db : Session = Depends(get_db)):
    return  UserController.getAll(db)
 
 @userRooter.delete('/deleteUser/{id}')
-async def delete_user(id:int,db : Session = Depends(get_db)):
-   return  UserController.deleteUser(id,db)
+async def delete_user(id:int,db : Session = Depends(get_db),token:str=Header(...)):
+   return  UserController.deleteUser(token,id,db)
 
 @userRooter.delete('/deleteUserPhone/{id}')
 async def deletePhone(id:int,db : Session = Depends(get_db)):

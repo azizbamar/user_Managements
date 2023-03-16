@@ -55,10 +55,49 @@ def updateUser(request :Registration,token , db):
     except JWTError as e:
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,detail="Error has been occured : " +e)
 
+def updateRight(db:Session,token:str):
+    try:
+        user = checkAccessToken(token)
+        role_id=user["user"].role_id
+        
+        role = db.query(Role).filter(Role.id == role_id).first()
+        test=False
+        if role:
+            claims=role.claims
+            for i in claims:
+                if i['object']=='users':
+                  if 'u' in  i['rights']:
+                    test=True
+            verif = test
+            return bool(verif)
+        else:
+            return False
+    except Exception:
+        return False
+
+def deleteRight(db:Session,token:str):
+    try:
+        user = checkAccessToken(token)
+        role_id=user["user"].role_id
+        
+        role = db.query(Role).filter(Role.id == role_id).first()
+        test=False
+        if role:
+            claims=role.claims
+            for i in claims:
+                if i['object']=='users':
+                  if 'd' in  i['rights']:
+                    test=True
+            verif = test
+            return bool(verif)
+        else:
+            return False
+    except Exception:
+        return False
 
 def adminUpdateUser(id, db: Session, request: UpdateSchema, token: str = Header(...)):
     try:
-        if isAdmin(db, token):
+        if updateRight(db, token):
             user = db.query(User).filter(User.id == id).first()
             if user:
                 user.name = request.name  
@@ -110,10 +149,12 @@ def getUserClaims(db: Session, token: str) -> List[str]:
         listclaims=list()
         if role:
             claims=role.claims
+            
             for item in claims:
+             
              listclaims.append(item['object'])
             print(listclaims)
-            return listclaims
+            return [listclaims,claims]
         else:
             return []
     except Exception:
@@ -137,10 +178,16 @@ def displayAdminDashboard(db: Session, token: str):
     try:
         user = checkAccessToken(token)
         role_id=user["user"].role_id
+        
         role = db.query(Role).filter(Role.id==role_id).first()
+        
         if role:
-            verif=role.name != "default role" 
-            return {"isAdmin":bool(verif),"claims":getUserClaims(db,token)}
+            test=False
+            claims=role.claims
+            for elm in claims:
+                if 'r' in elm['rights']:
+                  test=True
+            return {"isAdmin":bool(test),"claims":getUserClaims(db,token)[0],"details":getUserClaims(db,token)[1]}
         else:
             return False
     except Exception:
@@ -254,21 +301,29 @@ def removePhoneForUser(user_id,db):
     else:
         raise HTTPException (status_code=HTTP_401_UNAUTHORIZED,detail="User not found") 
 
-def deleteUser(user_id: int, db: Session):
-    user = db.query(User).filter(User.id == user_id).first()
-    if(user):
+def deleteUser(token:str,user_id: int, db: Session):
+    try:
+        # Check if the user has any roles
+   
+  
+            # Delete the user's roles first
+        
         # Delete the user
-        db.delete(user)
-        userPhone=db.query(Phone).filter(Phone.user_id==user_id)
-        if userPhone:
-            userPhone.delete() 
-        db.commit()
-        return {"detail": "User deleted"}
-    else :
-        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="User not found")
-    
-def displayAdminFields(db:Session,token:str=Header(...)):
-      return getUserClaims(db,token)
+        if(deleteRight(db,token)):
+            db.query(User).filter(User.id == user_id).delete()
+            userPhone=db.query(Phone).filter(Phone.user_id==user_id)
+            print(userPhone)
+            if userPhone:
+             userPhone.delete()
+            
+            db.commit()
+            
+            return {"detail": "User deleted"}
+    except AttributeError:
+        raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="User not found")
+    except Exception as e:
+        raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR, detail="Error occurred while deleting user")
+ 
 
 
 #RESET PASSWORD
