@@ -35,7 +35,7 @@ def signUp(request : Registration ,db):
         send_email(request.email,subject,body)
         return {"detail":"register succedded"}
     except IntegrityError as e:
-        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED,detail="email already in use")
+        raise HTTPException(status_code=HTTP_409_INTERNAL_SERVER_ERROR,detail="email already in use")
     except FlushError as e:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND,detail="role not found")
 #UPDATE ACCOUNT
@@ -330,6 +330,8 @@ def deleteUser(token:str,user_id: int, db: Session):
 def resetPassword(email,db):
     try:
         user = db.query(User).filter(User.email == email).first()
+        print(user)
+        
         if (user):
             pwd=generate_password(16)
             subject='your new password'

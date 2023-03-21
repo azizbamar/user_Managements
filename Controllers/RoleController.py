@@ -23,7 +23,7 @@ def add_role(role:RoleSchema,db):
     except IntegrityError as e:
         # Handle the error
         db.rollback()
-        raise HTTPException (status_code=HTTP_404_NOT_FOUND,detail="claims id not found") 
+        raise HTTPException (status_code=HTTP_409_INTERNAL_SERVER_ERROR,detail="role already exist") 
     except ValueError as ve:
      raise HTTPException(status_code=422,detail=str(ve))
     except Exception as e:

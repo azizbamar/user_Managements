@@ -3,6 +3,7 @@ from email.mime.text import MIMEText
 import os
 import smtplib
 from fastapi import BackgroundTasks
+from decorators.Threading import run_in_thread
 from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv('.env'))
 
@@ -16,7 +17,7 @@ class Envs:
     # MAIL_FROM_NAME = os.getenv('MAIN_FROM_NAME')
 
 
-
+@run_in_thread()
 def send_email(to_email: str, subject: str,body:str):
     # email details
     email = Envs.MAIL_FROM
@@ -43,4 +44,3 @@ def send_email(to_email: str, subject: str,body:str):
     s.quit()
 
     return {"message": "Email sent successfully"}
-

@@ -3,12 +3,13 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import smtplib
 from typing import List
-from fastapi import Depends,APIRouter, HTTPException,Header, Request
+from fastapi import Body, Depends,APIRouter, HTTPException,Header, Request
 from Controllers import UserController,TokenController
 from sqlalchemy.orm import Session
 from sqlalchemy import inspect
 # from Controllers.send_email import send_email_async
 from Schemas.Authentification import Authentification
+from Schemas.EmailSchema import ResetPasswordRequest
 from Schemas.PhoneAuthentification import PhoneAuthentification
 from Schemas.Registration import Registration
 from Schemas.UpdateUserSchema import UpdateSchema
@@ -74,8 +75,9 @@ async def isAdmin(token : str = Header(...),db : Session = Depends(get_db)):
    return  UserController.isAdmin(db,token=token)
 
 @userRooter.post('/forget_password')
-async def reset_password(email :str , db : Session = Depends(get_db)):
-   return  UserController.resetPassword(email,db)
+async def reset_password(email: str = Body(...), db: Session = Depends(get_db)):
+   
+    return UserController.resetPassword(email, db)
 
 #check token validity
 @userRooter.post('/phone_check_token')
