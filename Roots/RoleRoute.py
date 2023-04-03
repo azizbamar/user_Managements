@@ -37,8 +37,7 @@ async def deleteRole(idRole:int, db : Session = Depends(get_db)):
    return  RoleController.delete_role(idRole,db)
    
 @roleRouter.get('/userRole/{id}')
-async def getUserRoles(id:int,db : Session = Depends(get_db)):
-   
+async def getUserRoles(id:int,db : Session = Depends(get_db)):   
    return  RoleController.getUserRolesById(user_id=id,db=db)
 
 @roleRouter.get('/claims/')
@@ -66,3 +65,11 @@ async def getRoles(db: Session = Depends(get_db)):
    #  inspector = inspect(db)
     table_names =get_table_names(db)
     return table_names
+
+
+@roleRouter.get('/alltags/')
+async def getRoles(db: Session = Depends(get_db)):
+    all_merged_tags = RoleController.get_all_merged_tags(db)
+   #  inspector = inspect(db)
+    
+    return all_merged_tags

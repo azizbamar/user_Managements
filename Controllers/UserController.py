@@ -206,6 +206,19 @@ def signIn(request : Authentification , db):
  except ValueError as ve:
     raise HTTPException(status_code=422,detail=str(ve))
 
+
+
+def getuser(email : str , db):
+ try :   
+   user = db.query(User).filter(User.email == email).first()
+   if (user):
+       
+        return  user
+   else:
+        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED,detail="wrong email or password")
+ except ValueError as ve:
+    raise HTTPException(status_code=422,detail=str(ve))
+
 def getAllUsers(limit:int,db:Session,page:int=1):
     try:
         offset = (page - 1) * limit
@@ -383,7 +396,8 @@ def getAll(db:Session):
                     'name':i.name,
                     'avatar':i.avatar,
                     'phoneNumber':i.phoneNumber,
-                    'role':getUserRolesById(i.id,db),
+                    'role':getUserRolesById(i.id,db)['name'],
+                    'color':getUserRolesById(i.id,db)['color'],
                     'phone': phone_dict if phone else 'None',
                     'authorization':i.authorization
                 })

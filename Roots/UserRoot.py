@@ -89,6 +89,10 @@ async def check_token(db : Session = Depends(get_db),token : str = Header(...)):
 async def getAllUsers(page:int,limit:int,db : Session = Depends(get_db)):
    return  UserController.getAllUsers(limit,db,page)
 
+@userRooter.get('/getuser/{email}')
+async def getuser(email:str,db : Session = Depends(get_db)):
+   return  UserController.getuser(email=email,db=db)
+
 @userRooter.get('/getAll')
 async def getAllUsers(db : Session = Depends(get_db)):
    return  UserController.getAll(db)

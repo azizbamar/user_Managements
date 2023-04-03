@@ -9,4 +9,6 @@ class Role(Base):
     id = Column(Integer,primary_key= True , index=True)
     name = Column(String(255),unique= True)
     users = relationship("User",back_populates="role")
+    color = Column(String(255),unique= True)
     claims = Column(JSON)
+    tags = Column(JSON)

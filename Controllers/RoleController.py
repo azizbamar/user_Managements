@@ -16,14 +16,14 @@ from models.User import User
 def add_role(role:RoleSchema,db):
     try:
    
-        role = Role(name=role.name,claims=role.claims)
+        role = Role(name=role.name,claims=role.claims,color=role.color,tags=role.tags)
         db.add(role)
         db.commit()
         return dict({"detail":"register succedded"})
     except IntegrityError as e:
         # Handle the error
         db.rollback()
-        raise HTTPException (status_code=HTTP_409_INTERNAL_SERVER_ERROR,detail="role already exist") 
+        raise HTTPException (status_code=HTTP_409_INTERNAL_SERVER_ERROR,detail="color or name already exist") 
     except ValueError as ve:
      raise HTTPException(status_code=422,detail=str(ve))
     except Exception as e:
@@ -51,8 +51,10 @@ def update_role(r, role_id,db):
         role = get_role(role_id,db)
      
         if (role):
+            print(role)
             role.name = r.name
             role.claims = r.claims
+            role.tags=r.tags
             db.commit()
             return "role updated successfully"
         else:
@@ -103,7 +105,7 @@ def getUserRolesById(user_id,db:Session):
             user=getUserById(user_id,db)
             role=get_role(user.role_id,db)
             if role:
-                return role.name
+                return {"name":role.name,"color":role.color}
             else :
                 return None
         except AttributeError as e:
@@ -126,7 +128,7 @@ def getAllClaims(db: Session):
 
 
 
-
+ 
 
 def checkinlist(list,name):
     test=False
@@ -135,6 +137,30 @@ def checkinlist(list,name):
           test=True
     return test
           
+
+def get_all_merged_tags(session):
+    all_merged_tags = {}
+    roles = session.query(Role).all()
+    for role in roles:
+        tag_dict = {}
+        for tag in role.tags:
+            key = tag["key"]
+            values = tag["value"]
+            if key not in tag_dict:
+                tag_dict[key] = values
+        #     else:
+        #         tag_dict[key] = tag_dict[key].intersection(values)
+        # merged_tags = { key: list(values) for key, values in tag_dict.items() }
+        # for key, values in merged_tags.items():
+        #     if key in all_merged_tags:
+        #         for value in values:
+        #             if value not in all_merged_tags[key]:
+        #                 all_merged_tags[key].append(value)
+        #     else:
+        #         all_merged_tags[key] = values
+    return tag_dict
+
+
 
 
 
