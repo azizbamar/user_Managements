@@ -139,26 +139,17 @@ def checkinlist(list,name):
           
 
 def get_all_merged_tags(session):
-    all_merged_tags = {}
+    all_tags = {}
     roles = session.query(Role).all()
     for role in roles:
-        tag_dict = {}
         for tag in role.tags:
             key = tag["key"]
-            values = tag["value"]
-            if key not in tag_dict:
-                tag_dict[key] = values
-        #     else:
-        #         tag_dict[key] = tag_dict[key].intersection(values)
-        # merged_tags = { key: list(values) for key, values in tag_dict.items() }
-        # for key, values in merged_tags.items():
-        #     if key in all_merged_tags:
-        #         for value in values:
-        #             if value not in all_merged_tags[key]:
-        #                 all_merged_tags[key].append(value)
-        #     else:
-        #         all_merged_tags[key] = values
-    return tag_dict
+            value = tag["value"]
+            if key in all_tags and all_tags[key] != value:
+                pass
+            all_tags[key] = value
+    return all_tags
+
 
 
 
