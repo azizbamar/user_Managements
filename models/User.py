@@ -8,13 +8,14 @@ class User(Base):
     email = Column(String(255),unique=True)
     password = Column(String(255))
     name = Column(String(255))
-    phoneNumber = Column(String(255)) 
+    phoneNumber = Column(String(255),unique=True) 
     avatar = Column(String(255))
     authorization = Column(Boolean)
     role_id = Column('role_id', Integer, ForeignKey('roles.id')) 
     phone = relationship("Phone", uselist=False, back_populates="user",passive_deletes=True)
     tokens = relationship("Token", back_populates="user",passive_deletes=True)
     role = relationship("Role",back_populates="users")
+    
   
     
 

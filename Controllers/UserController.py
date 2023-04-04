@@ -35,7 +35,7 @@ def signUp(request : Registration ,db):
         send_email(request.email,subject,body)
         return {"detail":"register succedded"}
     except IntegrityError as e:
-        raise HTTPException(status_code=HTTP_409_INTERNAL_SERVER_ERROR,detail="email already in use")
+        raise HTTPException(status_code=HTTP_409_INTERNAL_SERVER_ERROR,detail="email or phone number already in use")
     except FlushError as e:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND,detail="role not found")
 #UPDATE ACCOUNT
@@ -122,6 +122,10 @@ def adminUpdateUser(id, db: Session, request: UpdateSchema, token: str = Header(
             status_code=HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"JWTError has been occurred: {e}"
         )
+    except IntegrityError as e:
+        # Handle the error
+        db.rollback()
+        raise HTTPException (status_code=HTTP_409_INTERNAL_SERVER_ERROR,detail="Phone number already in use")
     except SQLAlchemyError as e:
         raise HTTPException(
             status_code=HTTP_500_INTERNAL_SERVER_ERROR,

@@ -59,6 +59,10 @@ def update_role(r, role_id,db):
             return "role updated successfully"
         else:
            raise HTTPException(status_code=HTTP_404_NOT_FOUND , detail="role not found")
+    except IntegrityError as e:
+        # Handle the error
+        db.rollback()
+        raise HTTPException (status_code=HTTP_409_INTERNAL_SERVER_ERROR,detail="name already in use")
     except Exception as e:
        raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR , detail="Error has been occured" + e)
 
