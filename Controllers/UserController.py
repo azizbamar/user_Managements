@@ -34,6 +34,7 @@ def signUp(request : Registration ,db):
         body='Email : '+request.email +'\nPassword : '+pwd
         send_email(request.email,subject,body)
         return {"detail":"register succedded"}
+    
     except IntegrityError as e:
         raise HTTPException(status_code=HTTP_409_INTERNAL_SERVER_ERROR,detail="email or phone number already in use")
     except FlushError as e:
@@ -108,6 +109,7 @@ def adminUpdateUser(id, db: Session, request: UpdateSchema, token: str = Header(
                 db.commit()
                 return "account updated"
             else:
+                print('aaaaaaa')
                 raise HTTPException(
                     status_code=HTTP_401_UNAUTHORIZED,
                     detail="User not found"

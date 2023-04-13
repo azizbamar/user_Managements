@@ -20,12 +20,13 @@ class Envs:
 @run_in_thread()
 def send_email(to_email: str, subject: str,body:str):
     # email details
+    username=Envs.MAIL_USERNAME
     email = Envs.MAIL_FROM
     password = Envs.MAIL_PASSWORD
     print(email)
     # create message object
     msg = MIMEMultipart()
-    msg['From'] = email
+    msg['From'] = f"{username} <{email}>"
     msg['To'] = to_email
     msg['Subject'] = subject
     msg.attach(MIMEText(body, 'plain'))

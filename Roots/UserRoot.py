@@ -68,6 +68,7 @@ async def checkPhoneAccessToken(token : str = Header(...)):
 
 @userRooter.patch('/admin/update/{id}')
 async def adminUpdateUser(request :UpdateSchema,id,token : str = Header(...), db : Session = Depends(get_db)):
+   print('aaaaaa')
    return  UserController.adminUpdateUser(id,db,request,token)
 
 @userRooter.get('/admin')
