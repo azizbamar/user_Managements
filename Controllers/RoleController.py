@@ -126,8 +126,10 @@ def getAllClaims(db: Session):
 
     
     for item in listObjectNames:
-                listClaims.append({'object':item,'rights':''})
-    listClaims.append({'object':'adminmap','rights':''})
+                if item not in ['tokens','stock','objects','desks','doors']:
+                  
+                    listClaims.append({'object':item,'rights':''})
+
     return listClaims
 
 
