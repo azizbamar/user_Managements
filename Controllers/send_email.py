@@ -2,11 +2,24 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import os
 import smtplib
-from fastapi import BackgroundTasks
-from decorators.Threading import run_in_thread
+# from fastapi import BackgroundTasks
+# from thhh.thread imp
+# from decorators.Threading
 from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv('.env'))
 
+import threading
+from functools import wraps
+
+def run_in_thread(*func_args, **func_kwargs):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            thread = threading.Thread(target=func, args=args, kwargs=kwargs)
+            thread.start()
+            return thread
+        return wrapper
+    return decorator
 class Envs:
     MAIL_USERNAME = os.getenv('MAIL_USERNAME')
     MAIL_PASSWORD = os.getenv('MAIL_PASSWORD')

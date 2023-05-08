@@ -2,8 +2,8 @@
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import smtplib
-from typing import List
-from fastapi import Body, Depends,APIRouter, HTTPException,Header, Request
+from typing import List, Optional
+from fastapi import Body, Depends,APIRouter, File, HTTPException,Header, Request, UploadFile
 from Controllers import UserController,TokenController
 from sqlalchemy.orm import Session
 from sqlalchemy import inspect
@@ -12,7 +12,9 @@ from Schemas.Authentification import Authentification
 from Schemas.EmailSchema import ResetPasswordRequest
 from Schemas.PhoneAuthentification import PhoneAuthentification
 from Schemas.Registration import Registration
+from Schemas.SendEmailsSchema import SendEmails
 from Schemas.UpdateUserSchema import UpdateSchema
+from Schemas.UserChangePasswordSchema import UserChangePasswordSchema
 from database.database import get_db
 userRooter = APIRouter()
 
@@ -86,6 +88,11 @@ async def check_token(db : Session = Depends(get_db),token : str = Header(...)):
    #print(f"{Header}")
    return  TokenController.checkPhoneAccessToken(token,db)
 
+@userRooter.post('/sendEmails')
+async def sendEmails(sendEmails:SendEmails):
+   #print(f"{Header}")
+   return  UserController.sendEmails(sendEmails)
+
 @userRooter.get('/getAllUsers')
 async def getAllUsers(page:int,limit:int,db : Session = Depends(get_db)):
    return  UserController.getAllUsers(limit,db,page)
@@ -106,6 +113,9 @@ async def delete_user(id:int,db : Session = Depends(get_db),token:str=Header(...
 async def deletePhone(id:int,db : Session = Depends(get_db)):
    return  UserController.deletePhone(id,db)
 
+@userRooter.delete('/deleteUserPhoneByPhoneNumber/{phone}')
+async def deletePhone(phone:int,db : Session = Depends(get_db)):
+   return  UserController.deletePhoneByPhneNumber(phone,db)
 def get_table_names(db: Session = Depends(get_db)) -> List[str]:
     inspector = inspect(db)
     return inspector.get_table_names()
@@ -116,3 +126,10 @@ async def displayAdminDashboard(db:Session=Depends(get_db),token:str=Header(...)
 
 
 
+@userRooter.put("/users/{user_id}/change_password")
+def change_password(user_id: int, change_password: UserChangePasswordSchema, db: Session = Depends(get_db)):
+    return UserController.change_password(db, user_id=user_id, password=change_password.current_password, new_password=change_password.new_password)
+
+@userRooter.put("/updateavatar/{user_id}")
+async def updateavatar(user_id: int, picture: Optional[UploadFile] = File(None), db: Session = Depends(get_db)):
+    return await UserController.updateAvatar(user_id,picture,db)

@@ -3,9 +3,10 @@ from database.database import Base
 from sqlalchemy.orm import relationship
 
 class Demand(Base):
-    __tablename__ = "demandes"
+    __tablename__ = "demands"
     id = Column(Integer, primary_key=True, index=True)
     demandes = Column(JSON, nullable=True)
+    status=Column(String(255))
     desk_id = Column(Integer, ForeignKey("desks.desk_id"))
     user_id = Column(Integer, ForeignKey("users.id"), unique=True)
     desk = relationship("Desk", back_populates="demandes")

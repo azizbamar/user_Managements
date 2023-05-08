@@ -130,7 +130,7 @@ def checkAccessToken(token):
                     print(time.time())
                     print(decoded_token['exp']) 
                     email=decoded_token["email"]
-                    return dict({"user":get_user(email,db)})
+                    return dict({"user":get_user(email,db)[0],"phone":get_user(email,db)[1]})
                 else:              
                     raise HTTPException(status_code=HTTP_401_UNAUTHORIZED,detail="unauthorized")
             else:
@@ -180,8 +180,11 @@ def createPayload(user,nbHour):
 def get_user(email: str,db):
   try: 
     user = db.query(User).filter(User.email == email).first()
+    phone= db.query(Phone).filter(Phone.user_id == user.id).first()
+    if not phone:
+      phone = 'None'
     if not user:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="User not found")
-    return user
+    return [user,phone]
   except Exception :
         raise  HTTPException (status_code=HTTP_500_INTERNAL_SERVER_ERROR,detail="Error has been Occured")  

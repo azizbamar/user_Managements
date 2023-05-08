@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from database.database import  Base
-from sqlalchemy import Boolean, Column,Integer,String,ForeignKey,Table,ARRAY
+from sqlalchemy import Boolean, Column,Integer, LargeBinary,String,ForeignKey,Table,ARRAY
 from sqlalchemy.orm import relationship
 class User(Base):
     __tablename__ = "users"
@@ -9,7 +9,7 @@ class User(Base):
     password = Column(String(255))
     name = Column(String(255))
     phoneNumber = Column(String(255), unique=True)
-    avatar = Column(String(255))
+    avatar = Column(LargeBinary)
     authorization = Column(Boolean)
     role_id = Column('role_id', Integer, ForeignKey('roles.id'))
     phone = relationship("Phone", uselist=False, back_populates="user", passive_deletes=True)

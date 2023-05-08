@@ -11,3 +11,4 @@ pydantic[email]
 requests
 phonenumbers
 fastapi-mail
+pillow

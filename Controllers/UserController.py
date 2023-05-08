@@ -1,3 +1,4 @@
+import io
 import secrets
 import string
 from Controllers.RoleController import getRoleByName, getUserRolesById
@@ -8,12 +9,13 @@ from Schemas.PhoneAuthentification import PhoneAuthentification
 from Schemas.Hasher import hash_password
 from Schemas.Registration import Registration
 from sqlalchemy.orm import Session
+from Schemas.SendEmailsSchema import SendEmails
 from models.Token import Token
 from models.User import User
 from models.Role import Role
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import FlushError
-from fastapi import HTTPException,Header
+from fastapi import HTTPException,Header,Form,UploadFile,File,status
 from Schemas.UpdateUserSchema import UpdateSchema
 from models.Phone import Phone
 from jose import JWTError
@@ -21,6 +23,13 @@ from errors import *
 from sqlalchemy.exc import SQLAlchemyError
 from typing import List
 from confEmail import *
+import base64
+import asyncio
+from sqlalchemy.exc import IntegrityError
+from PIL import UnidentifiedImageError
+from fastapi import Form, HTTPException, UploadFile,File
+from io import BytesIO
+from PIL import Image, UnidentifiedImageError
 # sign Up
 def signUp(request : Registration ,db):
     try:       
@@ -198,6 +207,58 @@ def displayAdminDashboard(db: Session, token: str):
             return False
     except Exception:
         return False
+    
+
+async def updateAvatar(id,picture,db):
+   user = db.query(User).filter(User.id == id).first()
+   if user:
+    if picture:
+        try:
+            # Read the image file content
+            image_content = await picture.read()
+
+            # Open the image using Pillow
+            image = Image.open(io.BytesIO(image_content))
+
+            # Resize the image
+            image = image.resize((500, 500))
+
+            # Convert the image to RGB mode
+            image = image.convert("RGB")
+
+            # Save the image to a byte stream
+            image_byte_array = io.BytesIO()
+            image.save(image_byte_array, format='JPEG')
+
+            # Encode the image content in base64
+            image_data = base64.b64encode(image_byte_array.getvalue())
+
+            # Decode the base64 string to a regular string
+            image_str = image_data.decode('utf-8')
+
+            user.avatar = image_str.encode('utf-8')
+
+        except UnidentifiedImageError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid image"
+            )
+
+    try:
+        db.commit()
+
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="name already exists"
+        )
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid image")
+
+    return {"message": "Material updated successfully"}
+
+
 
 
 #login for guests and web application
@@ -413,6 +474,17 @@ def getAll(db:Session):
     except Exception:
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,detail="Error has been Occured")
 
+def deletePhoneByPhneNumber(phonenumber,db:Session) :
+    try:
+      user_id=db.query(User).filter(User.phoneNumber==phonenumber).first().id
+      userPhone=db.query(Phone).filter(Phone.user_id==user_id).first()
+      if userPhone:
+        db.delete(userPhone)
+        db.commit()
+    except:
+      print('An exception occurred')
+
+
 def deletePhone(id:int,db:Session):
     try:
       db.query(Phone).filter(Phone.id==id).delete()
@@ -420,3 +492,24 @@ def deletePhone(id:int,db:Session):
       return{"detail":"Phone deleted"}
     except:
       raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,detail="Error has been Occured")
+    
+
+def sendEmails(SendEmailSchema: SendEmails):
+    url = "http://localhost:8001/sendEmails/"
+    payload = {"emails": SendEmailSchema.recipients, "subject": SendEmailSchema.subject, "body": SendEmailSchema.body}
+    response = requests.post(url, json=payload)
+    response.raise_for_status()
+    return {"details": "Email sent successfully"}
+
+from Schemas import Hasher
+def change_password(db: Session, user_id: int, password: str, new_password: str):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    pwdCorrect=Hasher.verify_password(password, user.password)
+    if not pwdCorrect:
+        raise HTTPException(status_code=400, detail="Current password incoreect")
+    hashed_password = Hasher.hash_password(new_password)
+    user.password = hashed_password
+    db.commit()
+    return {"message": "Password updated successfully"}
