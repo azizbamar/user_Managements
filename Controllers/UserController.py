@@ -10,6 +10,7 @@ from Schemas.Hasher import hash_password
 from Schemas.Registration import Registration
 from sqlalchemy.orm import Session
 from Schemas.SendEmailsSchema import SendEmails
+from models.Notification import Notification
 from models.Token import Token
 from models.User import User
 from models.Role import Role
@@ -390,11 +391,24 @@ def deleteUser(token:str,user_id: int, db: Session):
         
         # Delete the user
         if(deleteRight(db,token)):
-            db.query(User).filter(User.id == user_id).delete()
-            userPhone=db.query(Phone).filter(Phone.user_id==user_id)
-            print(userPhone)
-            if userPhone:
-             userPhone.delete()
+            user =db.query(User).filter(User.id == user_id).first()
+            if(user):
+                
+                userPhone=db.query(Phone).filter(Phone.user_id==user_id).first()
+                print(userPhone)
+                if userPhone:
+                    userPhone.delete()
+                    print('ab')
+                   
+                userNot= db.query(Notification).filter(Notification.user_id == user_id).first() 
+                if  userNot :    
+                 print('not')
+                 
+                 db.query(Notification).filter(Notification.user_id == user_id).delete()    
+                print('ha3')
+                db.query(User).filter(User.id == user_id).delete()
+            print('a')
+
             
             db.commit()
             

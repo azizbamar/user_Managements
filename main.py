@@ -11,11 +11,8 @@ from models.demands import Demand
 from models.Material import Material  
 from models.Workspace import Workspace
 from models.Reservation import Reservation
+from models.Notification import Notification
 from fastapi.middleware.cors import CORSMiddleware
-
-
-
-
 from sqlalchemy.orm import Session
 from Roots.UserRoot import userRooter
 from Roots.RoleRoute import roleRouter

@@ -90,11 +90,6 @@ def createAccessTokenPhone(user,password,phone,rememberMe,db):
         raise HTTPException(status_code=HTTP_401_UNAUTHORIZED,detail="wrong email or password")
 
 
-                
-
-            
-
-
 
 def checkPhoneAccessToken(phoneToken,db):
     print(phoneToken)
