@@ -129,7 +129,7 @@ def getAllClaims(db: Session):
                 if item not in ['tokens','stock','objects','desks','doors']:
                   
                     listClaims.append({'object':item,'rights':''})
-
+    listClaims.append({'object':'broadcasting','rights':''})
     return listClaims
 
 
@@ -192,3 +192,12 @@ def getAllRoles(db):
         return roles
     except Exception:
         raise  HTTPException (status_code=HTTP_500_INTERNAL_SERVER_ERROR,detail="Error has been Occured") 
+
+
+def getUserTags(userId,db):
+    try:
+        user = db.query(User).filter(User.id == userId).first()
+        user_tags = user.role.tags
+        return user_tags
+    except Exception:
+        raise  HTTPException (status_code=HTTP_500_INTERNAL_SERVER_ERROR,detail="Error has been Occured")

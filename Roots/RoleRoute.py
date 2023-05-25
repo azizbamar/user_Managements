@@ -73,3 +73,7 @@ async def getRoles(db: Session = Depends(get_db)):
    #  inspector = inspect(db)
     
     return all_merged_tags
+
+@roleRouter.get('/tags/{userId}')
+async def getUserTags(userId:int,db: Session = Depends(get_db)):
+   return RoleController.getUserTags(userId,db)

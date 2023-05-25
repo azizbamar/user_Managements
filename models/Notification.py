@@ -8,4 +8,9 @@ class Notification(Base):
     time=Column(DateTime)
     read=Column(BOOLEAN)
     title=Column(String(100))
+    sender=Column(String(50))
+    deleted=Column(BOOLEAN)
     level=Column(String(10),nullable=True)
+
+    
+   

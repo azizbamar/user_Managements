@@ -267,8 +267,13 @@ def signIn(request : Authentification , db):
  try :   
    user = db.query(User).filter(User.email == request.email).first()
    if (user):
+#         if(user.authorization):
         token=createAccessToken(user,request.password,db)
         return  token
+        # else :
+        #      raise HTTPException(status_code=HTTP_401_UNAUTHORIZED,detail="This account is blocked")
+
+
    else:
         raise HTTPException(status_code=HTTP_401_UNAUTHORIZED,detail="wrong email or password")
  except ValueError as ve:

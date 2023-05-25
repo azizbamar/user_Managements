@@ -17,12 +17,14 @@ from errors import *
 def createAccessToken(user,password,db):
     payload =createPayload(user,24)
     if Hasher.verify_password(password, user.password):
-       
-        access_token = jwt.encode(payload, SECRET, algorithm=ALGORITHM)
-        token = Token(token = access_token ,user = user)
-        addToken(token,db)
-        u=checkAccessToken(access_token)["user"]
-        return {"user":u,"access_token": access_token, "token_type": "Bearer"}
+       if(user.authorization): 
+            access_token = jwt.encode(payload, SECRET, algorithm=ALGORITHM)
+            token = Token(token = access_token ,user = user)
+            addToken(token,db)
+            u=checkAccessToken(access_token)["user"]
+            return {"user":u,"access_token": access_token, "token_type": "Bearer"}
+       else:
+           raise HTTPException(status_code=HTTP_401_UNAUTHORIZED,detail="This account is blocked")
     else:
         raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="wrong email or password")
 
@@ -125,7 +127,13 @@ def checkAccessToken(token):
                     print(time.time())
                     print(decoded_token['exp']) 
                     email=decoded_token["email"]
-                    return dict({"user":get_user(email,db)[0],"phone":get_user(email,db)[1]})
+                    user=db.query(User).filter(User.email==email).first()
+                    if user:
+                      if(user.authorization):
+                        return dict({"user":get_user(email,db)[0],"phone":get_user(email,db)[1]})
+                      else :
+                          raise HTTPException(status_code=HTTP_401_UNAUTHORIZED,detail="This account is blocked")
+                
                 else:              
                     raise HTTPException(status_code=HTTP_401_UNAUTHORIZED,detail="unauthorized")
             else:
