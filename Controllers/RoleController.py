@@ -126,7 +126,7 @@ def getAllClaims(db: Session):
 
     
     for item in listObjectNames:
-                if item not in ['tokens','stock','objects','desks','doors']:
+                if item not in ['tokens','stock','objects','desks','doors','desk_materials','notifications','phoneshistory']:
                   
                     listClaims.append({'object':item,'rights':''})
     listClaims.append({'object':'broadcasting','rights':''})

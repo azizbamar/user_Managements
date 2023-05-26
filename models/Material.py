@@ -1,12 +1,16 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy import BLOB, Column, ForeignKey, Integer, String,BINARY
 from database.database import Base
+from sqlalchemy import LargeBinary
+
+from sqlalchemy.orm import relationship
 
 
 class Material(Base):
     __tablename__ = "materials"
     id = Column(Integer, primary_key=True, index=True)
-    matname = Column(String(255))
-    desk_id = Column(Integer, ForeignKey("desks.desk_id"))
-    desk = relationship("Desk", back_populates="materials")
+    name = Column(String(255), unique=True)
+    picture = Column(LargeBinary)
+    quantity = Column(Integer)
+
+    desk_materials = relationship("DeskMaterial", backref="materials", cascade='all, delete')
     

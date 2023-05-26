@@ -7,8 +7,9 @@ from models.Phone import Phone
 from models.Role import Role
 from models.Object import Object
 from models.Desk import Desk
-from models.demands import Demand
+from models.Door import Door
 from models.Material import Material  
+from models.DeskMaterial import DeskMaterial
 from models.Workspace import Workspace
 from models.Reservation import Reservation
 from models.Notification import Notification
