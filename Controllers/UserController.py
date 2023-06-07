@@ -11,6 +11,7 @@ from Schemas.Registration import Registration
 from sqlalchemy.orm import Session
 from Schemas.SendEmailsSchema import SendEmails
 from models.Notification import Notification
+from models.Reservation import Reservation
 from models.Token import Token
 from models.User import User
 from models.Role import Role
@@ -275,7 +276,7 @@ def signIn(request : Authentification , db):
 
 
    else:
-        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED,detail="wrong email or password")
+        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED,detail="Oops! It seems like you don't have an account yet")
  except ValueError as ve:
     raise HTTPException(status_code=422,detail=str(ve))
 
@@ -387,42 +388,34 @@ def removePhoneForUser(user_id,db):
     else:
         raise HTTPException (status_code=HTTP_401_UNAUTHORIZED,detail="User not found") 
 
-def deleteUser(token:str,user_id: int, db: Session):
+def deleteUser(token: str, user_id: int, db: Session):
     try:
-        # Check if the user has any roles
-   
-  
-            # Delete the user's roles first
-        
-        # Delete the user
-        if(deleteRight(db,token)):
-            user =db.query(User).filter(User.id == user_id).first()
-            if(user):
-                
-                userPhone=db.query(Phone).filter(Phone.user_id==user_id).first()
-                print(userPhone)
+        if deleteRight(db, token):
+            user = db.query(User).filter(User.id == user_id).first()
+            if user:
+                userPhone = user.phone
                 if userPhone:
-                    userPhone.delete()
-                    print('ab')
-                   
-                userNot= db.query(Notification).filter(Notification.user_id == user_id).first() 
-                if  userNot :    
-                 print('not')
-                 
-                 db.query(Notification).filter(Notification.user_id == user_id).delete()    
-                print('ha3')
-                db.query(User).filter(User.id == user_id).delete()
-            print('a')
+                    db.delete(userPhone)
 
-            
-            db.commit()
-            
-            return {"detail": "User deleted"}
-    except AttributeError:
+                userNotifications = user.notifications
+                if userNotifications:
+                    for notification in userNotifications:
+                        db.delete(notification)
+
+                userReservations = user.desks
+                if userReservations:
+                    for reservation in userReservations:
+                        db.delete(reservation)
+
+                db.delete(user)
+                db.commit()
+                return {"detail": "User deleted"}
+
         raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="User not found")
-    except Exception as e:
+    except SQLAlchemyError:
+        db.rollback()
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR, detail="Error occurred while deleting user")
- 
+
 
 
 #RESET PASSWORD
@@ -512,13 +505,21 @@ def deletePhone(id:int,db:Session):
     except:
       raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,detail="Error has been Occured")
     
-
+import json
 def sendEmails(SendEmailSchema: SendEmails):
-    url = "http://localhost:8001/sendEmails/"
+    config_file_path = "config.json"
+    
+    with open(config_file_path) as config_file:
+        config_data = json.load(config_file)
+        url = config_data.get("analyseNotificationServiceUrl")+"/analyseNotificationService/sendEmails/"
+    
     payload = {"emails": SendEmailSchema.recipients, "subject": SendEmailSchema.subject, "body": SendEmailSchema.body}
+    
     response = requests.post(url, json=payload)
     response.raise_for_status()
+    
     return {"details": "Email sent successfully"}
+
 
 from Schemas import Hasher
 def change_password(db: Session, user_id: int, password: str, new_password: str):

@@ -18,118 +18,118 @@ from Schemas.UserChangePasswordSchema import UserChangePasswordSchema
 from database.database import get_db
 userRooter = APIRouter()
 
-@userRooter.post('/user_sign_up')
+@userRooter.post('/userManagementService/user_sign_up')
 async def signUp(request : Registration, db : Session = Depends(get_db)):
    return  UserController.signUp(request,db)
 
 # Web Sign In
-@userRooter.post('/user_sign_in')
+@userRooter.post('/userManagementService/user_sign_in')
 async def signIn(request : Authentification, db : Session = Depends(get_db)):
    return  UserController.signIn(request,db)
 
-@userRooter.post('/token_sign_in')
+@userRooter.post('/userManagementService/token_sign_in')
 async def checkAccessToken(token : str = Header(...)):
    return  TokenController.checkAccessToken(token)
 
 
 # Phone Sign In
-@userRooter.post('/user_sign_in_from_phone')
+@userRooter.post('/userManagementService/user_sign_in_from_phone')
 async def signInFromPhone(request : PhoneAuthentification, db : Session = Depends(get_db)):
    return  UserController.signInFromPhone(request,db)
 
 # Web Sign Out
-@userRooter.post('/user_sign_out')
+@userRooter.post('/userManagementService/user_sign_out')
 async def signOut(db : Session = Depends(get_db),token : str = Header(...)):
    return  UserController.signOut(db,token)
 
 # Phone Sign Out
-@userRooter.post('/user_sign_out_from_phone')
+@userRooter.post('/userManagementService/user_sign_out_from_phone')
 async def signOutFromPhone(db : Session = Depends(get_db),token : str = Header(...)):
    return  UserController.signOutFromPhone(db,token)
 
 #update account
-@userRooter.post('/update_account')
+@userRooter.post('/userManagementService/update_account')
 async def updateUser(request : Registration,db : Session = Depends(get_db),token : str = Header(...)):
    return  UserController.updateUser(request,token,db)
 
 #delete Phone
-@userRooter.post('/removePhone/{user_id}')
+@userRooter.post('/userManagementService/removePhone/{user_id}')
 async def deletePhone(user_id:int,db : Session = Depends(get_db)):
    return  UserController.removePhoneForUser(user_id,db)
 
 # chercher users
 
-@userRooter.get('/users/{name}')
+@userRooter.get('/userManagementService/users/{name}')
 async def getUsersByName(name:str,db : Session = Depends(get_db)):
    return  UserController.getUsersByName(name,db)
 
 
-@userRooter.post('/phone_token_sign_in')
+@userRooter.post('/userManagementService/phone_token_sign_in')
 async def checkPhoneAccessToken(token : str = Header(...)):
    return  TokenController.checkPhoneAccessToken(token)
 
-@userRooter.patch('/admin/update/{id}')
+@userRooter.patch('/userManagementService/admin/update/{id}')
 async def adminUpdateUser(request :UpdateSchema,id,token : str = Header(...), db : Session = Depends(get_db)):
    print('aaaaaa')
    return  UserController.adminUpdateUser(id,db,request,token)
 
-@userRooter.get('/admin')
+@userRooter.get('/userManagementService/admin')
 async def isAdmin(token : str = Header(...),db : Session = Depends(get_db)):
    return  UserController.isAdmin(db,token=token)
 
-@userRooter.post('/forget_password')
+@userRooter.post('/userManagementService/forget_password')
 async def reset_password(email: str = Body(...), db: Session = Depends(get_db)):
    
     return UserController.resetPassword(email, db)
 
 #check token validity
-@userRooter.post('/phone_check_token')
+@userRooter.post('/userManagementService/phone_check_token')
 async def check_token(db : Session = Depends(get_db),token : str = Header(...)):
    #print(f"{Header}")
    return  TokenController.checkPhoneAccessToken(token,db)
 
-@userRooter.post('/sendEmails')
+@userRooter.post('/userManagementService/sendEmails')
 async def sendEmails(sendEmails:SendEmails):
    #print(f"{Header}")
    return  UserController.sendEmails(sendEmails)
 
-@userRooter.get('/getAllUsers')
+@userRooter.get('/userManagementService/getAllUsers')
 async def getAllUsers(page:int,limit:int,db : Session = Depends(get_db)):
    return  UserController.getAllUsers(limit,db,page)
 
-@userRooter.get('/getuser/{email}')
+@userRooter.get('/userManagementService/getuser/{email}')
 async def getuser(email:str,db : Session = Depends(get_db)):
    return  UserController.getuser(email=email,db=db)
 
-@userRooter.get('/getAll')
+@userRooter.get('/userManagementService/getAll')
 async def getAllUsers(db : Session = Depends(get_db)):
    return  UserController.getAll(db)
 
-@userRooter.delete('/deleteUser/{id}')
+@userRooter.delete('/userManagementService/deleteUser/{id}')
 async def delete_user(id:int,db : Session = Depends(get_db),token:str=Header(...)):
    return  UserController.deleteUser(token,id,db)
 
-@userRooter.delete('/deleteUserPhone/{id}')
+@userRooter.delete('/userManagementService/deleteUserPhone/{id}')
 async def deletePhone(id:int,db : Session = Depends(get_db)):
    return  UserController.deletePhone(id,db)
 
-@userRooter.delete('/deleteUserPhoneByPhoneNumber/{phone}')
+@userRooter.delete('/userManagementService/deleteUserPhoneByPhoneNumber/{phone}')
 async def deletePhone(phone:int,db : Session = Depends(get_db)):
    return  UserController.deletePhoneByPhneNumber(phone,db)
 def get_table_names(db: Session = Depends(get_db)) -> List[str]:
     inspector = inspect(db)
     return inspector.get_table_names()
 
-@userRooter.get('/dispalyadmin')
+@userRooter.get('/userManagementService/dispalyadmin')
 async def displayAdminDashboard(db:Session=Depends(get_db),token:str=Header(...)):
      return  UserController.displayAdminDashboard(db,token)
 
 
 
-@userRooter.put("/users/{user_id}/change_password")
+@userRooter.put("/userManagementService/users/{user_id}/change_password")
 def change_password(user_id: int, change_password: UserChangePasswordSchema, db: Session = Depends(get_db)):
     return UserController.change_password(db, user_id=user_id, password=change_password.current_password, new_password=change_password.new_password)
 
-@userRooter.put("/updateavatar/{user_id}")
+@userRooter.put("/userManagementService/updateavatar/{user_id}")
 async def updateavatar(user_id: int, picture: Optional[UploadFile] = File(None), db: Session = Depends(get_db)):
     return await UserController.updateAvatar(user_id,picture,db)

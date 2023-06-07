@@ -7,7 +7,6 @@ class Demand(Base):
     id = Column(Integer, primary_key=True, index=True)
     object =Column(String(255))
     description=status=Column(TEXT)
-    # demandes = Column(JSON, nullable=True)
     status=Column(String(255))
     desk_id = Column(Integer, ForeignKey("desks.desk_id"))
     user_id = Column(Integer, ForeignKey("users.id"))

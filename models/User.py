@@ -7,7 +7,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String(255), unique=True)
     password = Column(String(255))
-    avatar=Column(LargeBinary)
+    avatar = Column(LargeBinary)
     name = Column(String(255))
     phoneNumber = Column(String(255), unique=True)
     authorization = Column(Boolean)
@@ -16,7 +16,8 @@ class User(Base):
     tokens = relationship("Token", back_populates="user", passive_deletes=True)
     role = relationship("Role", back_populates="users")
     demandes = relationship("Demand", uselist=False, back_populates="user", cascade="all, delete-orphan")
-    desks = relationship("Reservation", back_populates="user", cascade="all, delete-orphan") # Added cascade option
+    desks = relationship("Reservation", back_populates="user", cascade="all, delete-orphan")
+    notifications = relationship("Notification", back_populates="user", cascade="all, delete")
 
 
     
